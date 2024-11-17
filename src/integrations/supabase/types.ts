@@ -54,10 +54,89 @@ export type Database = {
           },
         ]
       }
+      collaborators: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaborators_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaborators_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media: {
+        Row: {
+          file_path: string
+          id: string
+          project_id: string | null
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          file_path: string
+          id?: string
+          project_id?: string | null
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          file_path?: string
+          id?: string
+          project_id?: string | null
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
           id: string
+          role: Database["public"]["Enums"]["user_role"]
           total_bets: number | null
           username: string | null
           wallet_balance: number | null
@@ -65,6 +144,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id: string
+          role?: Database["public"]["Enums"]["user_role"]
           total_bets?: number | null
           username?: string | null
           wallet_balance?: number | null
@@ -72,11 +152,54 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          role?: Database["public"]["Enums"]["user_role"]
           total_bets?: number | null
           username?: string | null
           wallet_balance?: number | null
         }
         Relationships: []
+      }
+      projects: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          template_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          template_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          template_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       startups: {
         Row: {
@@ -111,6 +234,33 @@ export type Database = {
           name?: string
           odds?: number
           status?: string | null
+        }
+        Relationships: []
+      }
+      templates: {
+        Row: {
+          created_at: string
+          css_content: string | null
+          description: string | null
+          html_content: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          css_content?: string | null
+          description?: string | null
+          html_content: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          css_content?: string | null
+          description?: string | null
+          html_content?: string
+          id?: string
+          name?: string
         }
         Relationships: []
       }
@@ -169,7 +319,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "admin" | "editor" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
