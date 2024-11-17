@@ -23,9 +23,11 @@ const Navigation = () => {
             <Link to="/dashboard" className="text-gray-600 hover:text-primary transition-colors">
               Dashboard
             </Link>
+            <Link to="/auth" >
             <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-hover transition-colors">
               Start Betting
             </button>
+            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -58,12 +60,14 @@ const Navigation = () => {
             >
               Dashboard
             </Link>
+            <Link to="auth">
             <button 
               className="w-full text-left px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
               onClick={() => setIsOpen(false)}
             >
               Start Betting
             </button>
+            </Link>
           </div>
         </div>
       )}

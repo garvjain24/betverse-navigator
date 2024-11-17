@@ -1,30 +1,37 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const StartupCard = () => {
-  const startups = [
-    {
-      id: 1,
-      name: "TechCorp AI",
-      description: "Revolutionary AI solutions for enterprise",
-      sector: "Technology",
-      stage: "Series B",
-      odds: "2.5x",
-      trending: true,
-    },
-    {
-      id: 2,
-      name: "HealthTech Pro",
-      description: "Digital health monitoring platform",
-      sector: "Healthcare",
-      stage: "Series A",
-      odds: "1.8x",
-      trending: false,
-    },
-  ];
+  const [startups, setStartups] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchStartups = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('startups')
+          .select('*');
+
+        if (error) throw error;
+        setStartups(data);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStartups();
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -1,3 +1,5 @@
+import { BetTables } from './betting.ts';
+import { ProjectTables } from './projects.ts';
 export type Json =
   | string
   | number
