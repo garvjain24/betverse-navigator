@@ -12,23 +12,27 @@ import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Navigation />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/startups" element={<Startups />} />
-          <Route path="/startups/:id" element={<StartupDetails />} />
-          <Route path="/auth" element={<Auth />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  return (
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <div className="relative">
+            <Navigation />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/startups" element={<Startups />} />
+              <Route path="/startups/:id" element={<StartupDetails />} />
+              <Route path="/auth" element={<Auth />} />
+            </Routes>
+            <Toaster />
+            <Sonner />
+          </div>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
+  );
+};
 
 export default App;
