@@ -11,7 +11,7 @@ const Startups = () => {
   const [sector, setSector] = useState<string>("");
 
   return (
-    <div className="container mx-auto p-6 space-y-6 animate-fade-in">
+    <div className="container mx-auto p-6 space-y-6 animate-fade-in pt-20"> {/* Adjusted pt-20 */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <h1 className="text-3xl font-bold">Startups</h1>
         

@@ -6,7 +6,7 @@ const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="fixed w-full bg-white/80 backdrop-blur-md z-50 shadow-sm">
+    <nav className="fixed w-full bg-white/80 backdrop-blur-md z-50 shadow-sm h-16"> {/* Added h-16 */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
@@ -24,9 +24,9 @@ const Navigation = () => {
               Dashboard
             </Link>
             <Link to="/auth" >
-            <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-hover transition-colors">
-              Start Betting
-            </button>
+              <button className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-hover transition-colors">
+                Start Betting
+              </button>
             </Link>
           </div>
 
@@ -61,12 +61,12 @@ const Navigation = () => {
               Dashboard
             </Link>
             <Link to="auth">
-            <button 
-              className="w-full text-left px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
-              onClick={() => setIsOpen(false)}
-            >
-              Start Betting
-            </button>
+              <button 
+                className="w-full text-left px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                Start Betting
+              </button>
             </Link>
           </div>
         </div>

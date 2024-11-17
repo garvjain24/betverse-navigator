@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ChartBar, Coins, TrendingUp, Trophy } from "lucide-react";
 import BetHistory from "@/components/dashboard/BetHistory";
@@ -56,7 +55,7 @@ const Dashboard = () => {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="container mx-auto p-6 space-y-6 animate-fade-in">
+    <div className="container mx-auto p-6 space-y-6 animate-fade-in pt-16"> {/* Added pt-16 */}
       <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
       
       {/* Stats Overview */}
