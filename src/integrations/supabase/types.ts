@@ -211,6 +211,8 @@ export type Database = {
           investors: number | null
           name: string
           odds: number
+          sector: string | null
+          stage: string | null
           status: string | null
         }
         Insert: {
@@ -222,6 +224,8 @@ export type Database = {
           investors?: number | null
           name: string
           odds: number
+          sector?: string | null
+          stage?: string | null
           status?: string | null
         }
         Update: {
@@ -233,6 +237,8 @@ export type Database = {
           investors?: number | null
           name?: string
           odds?: number
+          sector?: string | null
+          stage?: string | null
           status?: string | null
         }
         Relationships: []

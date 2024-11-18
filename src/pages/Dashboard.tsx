@@ -5,8 +5,6 @@ import { Progress } from "@/components/ui/progress";
 import { ChartBar, Coins, TrendingUp, Trophy } from "lucide-react";
 import BetHistory from "@/components/dashboard/BetHistory";
 import ActiveBets from "@/components/dashboard/ActiveBets";
-import PerformanceChart from "@/components/dashboard/PerformanceChart";
-import Milestones from "@/components/dashboard/Milestones";
 import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
@@ -20,28 +18,26 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Not authenticated");
+
         const { data: betsData, error: betsError } = await supabase
           .from('bets')
-          .select('*');
+          .select('*')
+          .eq('user_id', session.user.id);
         if (betsError) throw betsError;
 
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-
-        const userId = sessionData.session?.user.id;
-        if (!userId) throw new Error("User not authenticated");
-
-        const { data: balanceData, error: balanceError } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('wallet_balance')
-          .eq('id', userId)
+          .eq('id', session.user.id)
           .single();
-        if (balanceError) throw balanceError;
+        if (profileError) throw profileError;
 
         setTotalBets(betsData.length);
-        setCurrentBalance(balanceData.wallet_balance);
+        setCurrentBalance(profileData.wallet_balance);
         setActiveTrades(betsData.filter(bet => bet.status === 'active').length);
-        setMilestonePoints(1250); // Replace with actual milestone points logic
+        setMilestonePoints(betsData.length * 100); // Simple milestone calculation
       } catch (error) {
         setError(error.message);
       } finally {
@@ -56,7 +52,7 @@ const Dashboard = () => {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="container mx-auto p-6 space-y-6 animate-fade-in pt-16"> {/* Added pt-16 */}
+    <div className="container mx-auto p-6 space-y-6 animate-fade-in pt-20">
       <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
       
       {/* Stats Overview */}
@@ -109,11 +105,6 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <BetHistory />
         <ActiveBets />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <PerformanceChart />
-        <Milestones />
       </div>
     </div>
   );
