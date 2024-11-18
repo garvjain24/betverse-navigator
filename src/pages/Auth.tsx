@@ -1,17 +1,30 @@
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogIn, UserPlus } from "lucide-react";
 import { signUpUser, loginUser } from "@/lib/utils/auth";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        navigate('/dashboard');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,13 +32,14 @@ const Auth = () => {
     try {
       if (isLogin) {
         await loginUser(email, password);
-        toast({ title: "Success", description: "Logged in successfully!" });
+        toast.success("Logged in successfully!");
       } else {
         await signUpUser(email, password);
-        toast({ title: "Success", description: "Signed up successfully!" });
+        toast.success("Signed up successfully!");
       }
+      navigate('/dashboard');
     } catch (error) {
-      toast({ title: "Error", description: error.message });
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
