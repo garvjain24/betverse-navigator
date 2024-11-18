@@ -1,5 +1,4 @@
-import { Database } from '../types';
-
+import type { Database } from './common'
 export * from './common'
 export * from './betting'
 export * from './projects'

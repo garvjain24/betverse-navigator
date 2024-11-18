@@ -1,5 +1,3 @@
-import { BetTables } from './betting.ts';
-import { ProjectTables } from './projects.ts';
 export type Json =
   | string
   | number
@@ -8,9 +6,17 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
+export interface Database {
   public: {
-    Tables: BetTables & ProjectTables
+    Tables: {
+      bets: BetTables['bets']
+      startups: BetTables['startups']
+      profiles: ProjectTables['profiles']
+      projects: ProjectTables['projects']
+      templates: ProjectTables['templates']
+      media: ProjectTables['media']
+      collaborators: ProjectTables['collaborators']
+    }
     Views: {
       [_ in never]: never
     }
@@ -41,3 +47,6 @@ export type DatabaseFunctions = {
     Returns: number
   }
 }
+
+import type { BetTables } from './betting'
+import type { ProjectTables } from './projects'
