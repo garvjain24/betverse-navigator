@@ -3,6 +3,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+const calculatePotentialReturn = (amount: number, odds: number) => {
+  // Simple calculation: amount * odds
+  return Number((amount * odds).toFixed(2));
+};
 
 const BetHistory = () => {
   const [bets, setBets] = useState([]);
@@ -10,22 +16,37 @@ const BetHistory = () => {
 
   useEffect(() => {
     const fetchBets = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          toast.error("Not authenticated");
+          return;
+        }
 
-      const { data, error } = await supabase
-        .from('bets')
-        .select(`
-          *,
-          startup:startups(name)
-        `)
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false });
+        const { data, error } = await supabase
+          .from('bets')
+          .select(`
+            *,
+            startup:startups(name, odds)
+          `)
+          .eq('user_id', session.user.id)
+          .order('created_at', { ascending: false });
 
-      if (!error) {
-        setBets(data);
+        if (error) throw error;
+        
+        // Calculate potential returns for each bet
+        const betsWithReturns = data.map(bet => ({
+          ...bet,
+          potential_return: calculatePotentialReturn(bet.amount, bet.startup?.odds || 1)
+        }));
+
+        setBets(betsWithReturns);
+      } catch (error) {
+        toast.error("Error fetching bet history");
+        console.error("Bet history error:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchBets();

@@ -6,6 +6,7 @@ import { ChartBar, Coins, TrendingUp, Trophy } from "lucide-react";
 import BetHistory from "@/components/dashboard/BetHistory";
 import ActiveBets from "@/components/dashboard/ActiveBets";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const [totalBets, setTotalBets] = useState(0);
@@ -13,43 +14,50 @@ const Dashboard = () => {
   const [activeTrades, setActiveTrades] = useState(0);
   const [milestonePoints, setMilestonePoints] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchDashboardData = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) throw new Error("Not authenticated");
+        if (!session) {
+          toast.error("Not authenticated");
+          return;
+        }
 
-        const { data: betsData, error: betsError } = await supabase
-          .from('bets')
-          .select('*')
-          .eq('user_id', session.user.id);
-        if (betsError) throw betsError;
-
+        // Fetch user profile data (including wallet balance)
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('wallet_balance')
+          .select('wallet_balance, total_bets')
           .eq('id', session.user.id)
           .single();
+
         if (profileError) throw profileError;
 
-        setTotalBets(betsData.length);
-        setCurrentBalance(profileData.wallet_balance);
-        setActiveTrades(betsData.filter(bet => bet.status === 'active').length);
-        setMilestonePoints(betsData.length * 100); // Simple milestone calculation
+        // Fetch active bets count
+        const { data: activeBetsData, error: betsError } = await supabase
+          .from('bets')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .eq('status', 'active');
+
+        if (betsError) throw betsError;
+
+        setTotalBets(profileData.total_bets || 0);
+        setCurrentBalance(profileData.wallet_balance || 0);
+        setActiveTrades(activeBetsData?.length || 0);
+        setMilestonePoints((profileData.total_bets || 0) * 100); // Simple milestone calculation
       } catch (error) {
-        setError(error.message);
+        toast.error("Error fetching dashboard data");
+        console.error("Dashboard error:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchDashboardData();
   }, []);
 
   if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="container mx-auto p-6 space-y-6 animate-fade-in pt-20">
@@ -64,18 +72,18 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalBets}</div>
-            <Progress value={75} className="mt-2" />
+            <Progress value={(totalBets / 10) * 100} className="mt-2" />
           </CardContent>
         </Card>
         
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Current Balance</CardTitle>
+            <CardTitle className="text-sm font-medium">Wallet Balance</CardTitle>
             <Coins className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${currentBalance}</div>
-            <Progress value={65} className="mt-2" />
+            <Progress value={(currentBalance / 2000) * 100} className="mt-2" />
           </CardContent>
         </Card>
         
@@ -86,7 +94,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activeTrades}</div>
-            <Progress value={40} className="mt-2" />
+            <Progress value={(activeTrades / 5) * 100} className="mt-2" />
           </CardContent>
         </Card>
         
@@ -97,7 +105,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{milestonePoints}</div>
-            <Progress value={85} className="mt-2" />
+            <Progress value={(milestonePoints / 1000) * 100} className="mt-2" />
           </CardContent>
         </Card>
       </div>

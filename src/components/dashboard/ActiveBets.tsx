@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const ActiveBets = () => {
   const [activeBets, setActiveBets] = useState([]);
@@ -10,26 +11,49 @@ const ActiveBets = () => {
 
   useEffect(() => {
     const fetchActiveBets = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          toast.error("Not authenticated");
+          return;
+        }
 
-      const { data, error } = await supabase
-        .from('bets')
-        .select(`
-          *,
-          startup:startups(name, growth_percentage)
-        `)
-        .eq('user_id', session.user.id)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
+        const { data, error } = await supabase
+          .from('bets')
+          .select(`
+            *,
+            startup:startups(name, growth_percentage, odds)
+          `)
+          .eq('user_id', session.user.id)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false });
 
-      if (!error) {
+        if (error) throw error;
         setActiveBets(data);
+      } catch (error) {
+        toast.error("Error fetching active bets");
+        console.error("Active bets error:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchActiveBets();
+
+    // Subscribe to real-time updates
+    const subscription = supabase
+      .channel('active_bets_changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'bets',
+        filter: `user_id=eq.${supabase.auth.getSession()?.data?.session?.user?.id}`
+      }, fetchActiveBets)
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   if (loading) return <div>Loading...</div>;
@@ -46,7 +70,7 @@ const ActiveBets = () => {
               <div>
                 <div className="font-medium">{bet.startup?.name}</div>
                 <div className="text-sm text-muted-foreground">
-                  ${bet.amount} at {(bet.potential_return / bet.amount).toFixed(1)}x
+                  ${bet.amount} at {bet.startup?.odds}x
                 </div>
               </div>
               <div className={`flex items-center ${
@@ -66,6 +90,11 @@ const ActiveBets = () => {
             />
           </div>
         ))}
+        {activeBets.length === 0 && (
+          <div className="text-center text-muted-foreground">
+            No active bets
+          </div>
+        )}
       </CardContent>
     </Card>
   );
