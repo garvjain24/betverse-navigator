@@ -8,53 +8,64 @@ import { toast } from "sonner";
 const ActiveBets = () => {
   const [activeBets, setActiveBets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
-    const fetchActiveBets = async () => {
+    const setupSubscription = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           toast.error("Not authenticated");
           return;
         }
+        
+        setUserId(session.user.id);
+        await fetchActiveBets(session.user.id);
 
-        const { data, error } = await supabase
-          .from('bets')
-          .select(`
-            *,
-            startup:startups(name, growth_percentage, odds)
-          `)
-          .eq('user_id', session.user.id)
-          .eq('status', 'active')
-          .order('created_at', { ascending: false });
+        // Subscribe to real-time updates
+        const subscription = supabase
+          .channel('active_bets_changes')
+          .on('postgres_changes', { 
+            event: '*', 
+            schema: 'public', 
+            table: 'bets',
+            filter: `user_id=eq.${session.user.id}`
+          }, () => fetchActiveBets(session.user.id))
+          .subscribe();
 
-        if (error) throw error;
-        setActiveBets(data);
+        return () => {
+          subscription.unsubscribe();
+        };
       } catch (error) {
-        toast.error("Error fetching active bets");
-        console.error("Active bets error:", error);
-      } finally {
-        setLoading(false);
+        toast.error("Error setting up real-time updates");
+        console.error("Subscription error:", error);
       }
     };
 
-    fetchActiveBets();
-
-    // Subscribe to real-time updates
-    const subscription = supabase
-      .channel('active_bets_changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'bets',
-        filter: `user_id=eq.${supabase.auth.getSession()?.data?.session?.user?.id}`
-      }, fetchActiveBets)
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    setupSubscription();
   }, []);
+
+  const fetchActiveBets = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('bets')
+        .select(`
+          *,
+          startup:startups(name, growth_percentage, odds)
+        `)
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setActiveBets(data);
+    } catch (error) {
+      toast.error("Error fetching active bets");
+      console.error("Active bets error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) return <div>Loading...</div>;
 

@@ -310,6 +310,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_potential_return: {
+        Args: {
+          bet_amount: number
+          startup_odds: number
+        }
+        Returns: number
+      }
       decrement_balance: {
         Args: {
           user_id: string
