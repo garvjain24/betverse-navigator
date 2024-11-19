@@ -1,15 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ChartBar, TrendingUp, Trophy } from "lucide-react";
 import BetHistory from "@/components/dashboard/BetHistory";
 import ActiveBets from "@/components/dashboard/ActiveBets";
 import CoinBalance from "@/components/dashboard/CoinBalance";
+import TransactionHistory from "@/components/dashboard/TransactionHistory";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-// ... keep existing code (Dashboard component implementation)
 
 const Dashboard = () => {
   const [totalBets, setTotalBets] = useState(0);
@@ -49,13 +47,28 @@ const Dashboard = () => {
         setMilestonePoints((profileData.total_bets || 0) * 100);
       } catch (error) {
         toast.error("Error fetching dashboard data");
-        console.error("Dashboard error:", error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchDashboardData();
+
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel('dashboard_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'profiles'
+      }, () => {
+        fetchDashboardData();
+      })
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
   }, []);
 
   if (loading) return <div>Loading...</div>;
@@ -102,8 +115,13 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <BetHistory />
-        <ActiveBets />
+        <div className="space-y-6">
+          <BetHistory />
+          <TransactionHistory />
+        </div>
+        <div className="space-y-6">
+          <ActiveBets />
+        </div>
       </div>
     </div>
   );

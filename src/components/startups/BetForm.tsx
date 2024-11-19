@@ -32,7 +32,7 @@ const BetForm = () => {
       
       toast.success("Bet placed successfully!");
       setAmount("");
-    } catch (error) {
+    } catch (error: any) {
       toast.error(error.message);
     } finally {
       setLoading(false);
@@ -48,7 +48,7 @@ const BetForm = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="amount" className="text-sm font-medium">
-              Bet Amount
+              Bet Amount (Coins)
             </label>
             <Input
               id="amount"
