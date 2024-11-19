@@ -203,6 +203,8 @@ export type Database = {
       }
       startups: {
         Row: {
+          active_buyers: number | null
+          active_sellers: number | null
           created_at: string
           description: string | null
           growth_percentage: number | null
@@ -216,6 +218,8 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          active_buyers?: number | null
+          active_sellers?: number | null
           created_at?: string
           description?: string | null
           growth_percentage?: number | null
@@ -229,6 +233,8 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          active_buyers?: number | null
+          active_sellers?: number | null
           created_at?: string
           description?: string | null
           growth_percentage?: number | null
@@ -329,6 +335,14 @@ export type Database = {
           user_id: string
         }
         Returns: number
+      }
+      place_bet: {
+        Args: {
+          p_user_id: string
+          p_startup_id: string
+          p_amount: number
+        }
+        Returns: string
       }
     }
     Enums: {
