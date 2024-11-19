@@ -1,7 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const UserLeaderboard = () => {
+interface UserLeaderboardProps {
+  startupId: string;
+}
+
+const UserLeaderboard = ({ startupId }: UserLeaderboardProps) => {
   const users = [
     { name: "John D.", amount: "$5,000", avatar: "/placeholder.svg" },
     { name: "Sarah M.", amount: "$3,500", avatar: "/placeholder.svg" },

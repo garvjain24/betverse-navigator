@@ -33,20 +33,14 @@ const CoinBalance = () => {
     fetchBalance();
 
     // Subscribe to realtime changes
-    const channel = supabase
-      .channel('profile_changes')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'profiles',
-        filter: `id=eq.${session?.user?.id}`
-      }, (payload) => {
-        setBalance(payload.new.wallet_balance);
-      })
-      .subscribe();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        fetchBalance();
+      }
+    });
 
     return () => {
-      channel.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 
