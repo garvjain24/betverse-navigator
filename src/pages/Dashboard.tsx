@@ -2,15 +2,17 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ChartBar, Coins, TrendingUp, Trophy } from "lucide-react";
+import { ChartBar, TrendingUp, Trophy } from "lucide-react";
 import BetHistory from "@/components/dashboard/BetHistory";
 import ActiveBets from "@/components/dashboard/ActiveBets";
+import CoinBalance from "@/components/dashboard/CoinBalance";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+// ... keep existing code (Dashboard component implementation)
+
 const Dashboard = () => {
   const [totalBets, setTotalBets] = useState(0);
-  const [currentBalance, setCurrentBalance] = useState(0);
   const [activeTrades, setActiveTrades] = useState(0);
   const [milestonePoints, setMilestonePoints] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -24,10 +26,10 @@ const Dashboard = () => {
           return;
         }
 
-        // Fetch user profile data (including wallet balance)
+        // Fetch user profile data
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('wallet_balance, total_bets')
+          .select('total_bets')
           .eq('id', session.user.id)
           .single();
 
@@ -43,9 +45,8 @@ const Dashboard = () => {
         if (betsError) throw betsError;
 
         setTotalBets(profileData.total_bets || 0);
-        setCurrentBalance(profileData.wallet_balance || 0);
         setActiveTrades(activeBetsData?.length || 0);
-        setMilestonePoints((profileData.total_bets || 0) * 100); // Simple milestone calculation
+        setMilestonePoints((profileData.total_bets || 0) * 100);
       } catch (error) {
         toast.error("Error fetching dashboard data");
         console.error("Dashboard error:", error);
@@ -63,8 +64,9 @@ const Dashboard = () => {
     <div className="container mx-auto p-6 space-y-6 animate-fade-in pt-20">
       <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
       
-      {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <CoinBalance />
+        
         <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Bets</CardTitle>
@@ -73,17 +75,6 @@ const Dashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">{totalBets}</div>
             <Progress value={(totalBets / 10) * 100} className="mt-2" />
-          </CardContent>
-        </Card>
-        
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Wallet Balance</CardTitle>
-            <Coins className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${currentBalance}</div>
-            <Progress value={(currentBalance / 2000) * 100} className="mt-2" />
           </CardContent>
         </Card>
         
