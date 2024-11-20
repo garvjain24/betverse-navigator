@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Plus } from 'lucide-react';
+import { Menu, X, Plus, Trophy } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -52,6 +52,10 @@ const Navigation = () => {
                 <Link to="/dashboard" className="text-gray-600 hover:text-primary transition-colors">
                   Dashboard
                 </Link>
+                <Link to="/milestones" className="text-gray-600 hover:text-primary transition-colors">
+                  <Trophy className="inline-block mr-1" size={20} />
+                  Milestones
+                </Link>
                 <Link to="/startups/new" className="text-gray-600 hover:text-primary transition-colors">
                   <Plus className="inline-block mr-1" size={20} />
                   New Startup
@@ -100,6 +104,13 @@ const Navigation = () => {
                   onClick={() => setIsOpen(false)}
                 >
                   Dashboard
+                </Link>
+                <Link
+                  to="/milestones"
+                  className="block px-3 py-2 text-gray-600 hover:text-primary transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Milestones
                 </Link>
                 <Link
                   to="/startups/new"
