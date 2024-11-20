@@ -5,12 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Users, DollarSign, TrendingUp } from "lucide-react";
 import BetForm from "@/components/startups/BetForm";
 import UserLeaderboard from "@/components/startups/UserLeaderboard";
-import OddsHistory from "@/components/startups/OddsHistory";
-import MarketActivity from "@/components/startups/MarketActivity";
-import UserBets from "@/components/startups/UserBets";
+import MarketData from "@/components/startups/MarketData";
+import OrderBook from "@/components/startups/OrderBook";
+import PlaceOrder from "@/components/startups/PlaceOrder";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 interface Startup {
   id: string;
@@ -20,41 +19,12 @@ interface Startup {
   growth_percentage: number;
   investors: number;
   stage: string | null;
-  active_buyers: number;
-  active_sellers: number;
-}
-
-interface Bet {
-  id: string;
-  amount: number;
-  potential_return: number;
-  status: string;
 }
 
 const StartupDetails = () => {
   const { id } = useParams();
   const [startup, setStartup] = useState<Startup | null>(null);
-  const [userBets, setUserBets] = useState<Bet[]>([]);
   const [loading, setLoading] = useState(true);
-  const [oddsHistory, setOddsHistory] = useState<Array<{ time: string; odds: number }>>([]);
-
-  const fetchUserBets = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const { data, error } = await supabase
-      .from('bets')
-      .select('*')
-      .eq('startup_id', id)
-      .eq('user_id', session.user.id)
-      .eq('status', 'active');
-
-    if (error) {
-      toast.error("Error fetching user bets");
-      return;
-    }
-    setUserBets(data || []);
-  };
 
   useEffect(() => {
     const fetchStartup = async () => {
@@ -66,8 +36,7 @@ const StartupDetails = () => {
           .single();
 
         if (error) throw error;
-        setStartup(data as Startup);
-        updateOddsHistory(data.odds);
+        setStartup(data);
       } catch (error) {
         toast.error("Error fetching startup details");
       } finally {
@@ -76,70 +45,24 @@ const StartupDetails = () => {
     };
 
     fetchStartup();
-    fetchUserBets();
 
     // Subscribe to real-time updates
     const channel = supabase
       .channel('startup_changes')
-      .on<RealtimePostgresChangesPayload<Startup>>(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'startups',
-          filter: `id=eq.${id}`
-        },
-        (payload) => {
-          if (payload.new && 'odds' in payload.new && typeof payload.new.odds === 'number') {
-            setStartup(payload.new as Startup);
-            updateOddsHistory(payload.new.odds);
-          }
-        }
-      )
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'startups',
+        filter: `id=eq.${id}`
+      }, (payload) => {
+        setStartup(payload.new as Startup);
+      })
       .subscribe();
-
-    // Set up 5-second interval for odds updates
-    const intervalId = setInterval(updateRandomOdds, 5000);
 
     return () => {
       channel.unsubscribe();
-      clearInterval(intervalId);
     };
   }, [id]);
-
-  const updateOddsHistory = (currentOdds: number) => {
-    const now = new Date();
-    setOddsHistory(prev => {
-      const newHistory = [...prev, { 
-        time: now.toLocaleTimeString(), 
-        odds: currentOdds 
-      }].slice(-5);
-      return newHistory;
-    });
-  };
-
-  const updateRandomOdds = async () => {
-    if (!startup) return;
-
-    const randomChange = Math.random() > 0.5 ? 0.01 : -0.01;
-    const newOdds = Math.max(1, startup.odds * (1 + randomChange));
-
-    try {
-      const { error } = await supabase
-        .from('startups')
-        .update({ odds: newOdds })
-        .eq('id', startup.id);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error updating odds:", error);
-    }
-  };
-
-  const handleBetSold = (betId: string) => {
-    // Immediately remove the bet from local state
-    setUserBets(prevBets => prevBets.filter(bet => bet.id !== betId));
-  };
 
   if (loading) return <div>Loading...</div>;
   if (!startup) return <div>Startup not found</div>;
@@ -157,19 +80,13 @@ const StartupDetails = () => {
               {startup.growth_percentage >= 0 ? "+" : ""}{startup.growth_percentage}%
             </Badge>
           </div>
+
+          <MarketData startupId={id} />
           
-          <MarketActivity 
-            activeBuyers={startup.active_buyers}
-            activeSellers={startup.active_sellers}
-            odds={startup.odds}
-          />
-
-          <OddsHistory oddsHistory={oddsHistory} />
-
-          <UserBets 
-            bets={userBets} 
-            onBetSold={handleBetSold}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <OrderBook startupId={id} />
+            <PlaceOrder startupId={id} />
+          </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
