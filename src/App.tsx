@@ -12,6 +12,7 @@ import Startups from "./pages/Startups";
 import StartupDetails from "./pages/StartupDetails";
 import NewStartup from "./pages/NewStartup";
 import Auth from "./pages/Auth";
+import Milestones from "./pages/Milestones";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +81,14 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <StartupDetails />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/milestones"
+                element={
+                  <ProtectedRoute>
+                    <Milestones />
                   </ProtectedRoute>
                 }
               />

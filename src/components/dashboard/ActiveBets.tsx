@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,7 +23,6 @@ const ActiveBets = () => {
         setUserId(session.user.id);
         await fetchActiveBets(session.user.id);
 
-        // Subscribe to real-time updates
         const subscription = supabase
           .channel('active_bets_changes')
           .on('postgres_changes', { 
@@ -38,7 +38,6 @@ const ActiveBets = () => {
         };
       } catch (error) {
         toast.error("Error setting up real-time updates");
-        console.error("Subscription error:", error);
       }
     };
 
@@ -61,9 +60,22 @@ const ActiveBets = () => {
       setActiveBets(data);
     } catch (error) {
       toast.error("Error fetching active bets");
-      console.error("Active bets error:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSellBet = async (betId) => {
+    try {
+      const { data, error } = await supabase.rpc('sell_bet', {
+        p_bet_id: betId,
+        p_user_id: userId
+      });
+
+      if (error) throw error;
+      toast.success(`Bet sold successfully for ${data} coins!`);
+    } catch (error) {
+      toast.error("Error selling bet");
     }
   };
 
@@ -84,15 +96,24 @@ const ActiveBets = () => {
                   ${bet.amount} at {bet.startup?.odds}x
                 </div>
               </div>
-              <div className={`flex items-center ${
-                bet.startup?.growth_percentage >= 0 ? 'text-green-500' : 'text-red-500'
-              }`}>
-                {bet.startup?.growth_percentage >= 0 ? (
-                  <ArrowUp className="h-4 w-4 mr-1" />
-                ) : (
-                  <ArrowDown className="h-4 w-4 mr-1" />
-                )}
-                {Math.abs(bet.startup?.growth_percentage)}%
+              <div className="flex items-center gap-2">
+                <div className={`flex items-center ${
+                  bet.startup?.growth_percentage >= 0 ? 'text-green-500' : 'text-red-500'
+                }`}>
+                  {bet.startup?.growth_percentage >= 0 ? (
+                    <ArrowUp className="h-4 w-4 mr-1" />
+                  ) : (
+                    <ArrowDown className="h-4 w-4 mr-1" />
+                  )}
+                  {Math.abs(bet.startup?.growth_percentage)}%
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSellBet(bet.id)}
+                >
+                  Sell
+                </Button>
               </div>
             </div>
             <Progress

@@ -4,16 +4,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ArrowUp, ArrowDown, Users, DollarSign, TrendingUp } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import BetForm from "@/components/startups/BetForm";
-import StartupStats from "@/components/startups/StartupStats";
 import UserLeaderboard from "@/components/startups/UserLeaderboard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const StartupDetails = () => {
   const { id } = useParams();
-  const [startup, setStartup] = useState<any>(null);
+  const [startup, setStartup] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [oddsHistory] = useState([
+    { time: '1h ago', odds: 1.5 },
+    { time: '45m ago', odds: 1.8 },
+    { time: '30m ago', odds: 2.1 },
+    { time: '15m ago', odds: 2.3 },
+    { time: 'Now', odds: 2.5 },
+  ]);
 
   useEffect(() => {
     const fetchStartup = async () => {
@@ -60,8 +67,15 @@ const StartupDetails = () => {
     <div className="container mx-auto p-6 space-y-6 animate-fade-in pt-20">
       <div className="flex flex-col md:flex-row justify-between items-start gap-6">
         <div className="space-y-4 flex-1">
-          <h1 className="text-3xl font-bold">{startup.name}</h1>
-          <p className="text-muted-foreground">{startup.description}</p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold">{startup.name}</h1>
+              <p className="text-muted-foreground">{startup.description}</p>
+            </div>
+            <Badge variant={startup.growth_percentage >= 0 ? "success" : "destructive"}>
+              {startup.growth_percentage >= 0 ? "+" : ""}{startup.growth_percentage}%
+            </Badge>
+          </div>
           
           <Card>
             <CardHeader>
@@ -82,11 +96,38 @@ const StartupDetails = () => {
                 <div className="text-sm font-medium mb-2">Current Odds</div>
                 <div className="text-3xl font-bold">{startup.odds}x</div>
               </div>
-              <Progress value={((startup.active_buyers || 0) / ((startup.active_buyers || 0) + (startup.active_sellers || 1))) * 100} />
+              <Progress 
+                value={((startup.active_buyers || 0) / 
+                ((startup.active_buyers || 0) + (startup.active_sellers || 1))) * 100} 
+              />
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-3 gap-4 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Odds History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={oddsHistory}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="time" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line 
+                      type="monotone" 
+                      dataKey="odds" 
+                      stroke="#8B5CF6" 
+                      strokeWidth={2} 
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
               <Users className="h-6 w-6 mx-auto mb-2" />
               <div className="text-sm font-medium">{startup.investors || 0} Investors</div>
