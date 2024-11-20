@@ -11,12 +11,42 @@ import UserBets from "@/components/startups/UserBets";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface Startup {
+  id: string;
+  name: string;
+  description: string | null;
+  odds: number;
+  growth_percentage: number;
+  investors: number;
+  stage: string | null;
+  active_buyers: number;
+  active_sellers: number;
+}
+
 const StartupDetails = () => {
   const { id } = useParams();
-  const [startup, setStartup] = useState(null);
+  const [startup, setStartup] = useState<Startup | null>(null);
   const [userBets, setUserBets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [oddsHistory, setOddsHistory] = useState([]);
+
+  const fetchUserBets = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { data, error } = await supabase
+      .from('bets')
+      .select('*')
+      .eq('startup_id', id)
+      .eq('user_id', session.user.id)
+      .eq('status', 'active');
+
+    if (error) {
+      toast.error("Error fetching user bets");
+      return;
+    }
+    setUserBets(data || []);
+  };
 
   useEffect(() => {
     const fetchStartup = async () => {
@@ -35,24 +65,6 @@ const StartupDetails = () => {
       } finally {
         setLoading(false);
       }
-    };
-
-    const fetchUserBets = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const { data, error } = await supabase
-        .from('bets')
-        .select('*')
-        .eq('startup_id', id)
-        .eq('user_id', session.user.id)
-        .eq('status', 'active');
-
-      if (error) {
-        toast.error("Error fetching user bets");
-        return;
-      }
-      setUserBets(data || []);
     };
 
     fetchStartup();
@@ -81,7 +93,7 @@ const StartupDetails = () => {
     };
   }, [id]);
 
-  const updateOddsHistory = (currentOdds) => {
+  const updateOddsHistory = (currentOdds: number) => {
     const now = new Date();
     setOddsHistory(prev => {
       const newHistory = [...prev, { 
