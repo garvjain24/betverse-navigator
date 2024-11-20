@@ -10,7 +10,7 @@ import MarketActivity from "@/components/startups/MarketActivity";
 import UserBets from "@/components/startups/UserBets";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 interface Startup {
   id: string;
@@ -79,9 +79,9 @@ const StartupDetails = () => {
     fetchUserBets();
 
     // Subscribe to real-time updates
-    const channel: RealtimeChannel = supabase
+    const channel = supabase
       .channel('startup_changes')
-      .on(
+      .on<RealtimePostgresChangesPayload<Startup>>(
         'postgres_changes',
         {
           event: '*',
@@ -89,7 +89,7 @@ const StartupDetails = () => {
           table: 'startups',
           filter: `id=eq.${id}`
         },
-        (payload: { new: Startup }) => {
+        (payload) => {
           setStartup(payload.new);
           updateOddsHistory(payload.new.odds);
         }
