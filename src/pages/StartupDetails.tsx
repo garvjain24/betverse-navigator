@@ -136,10 +136,9 @@ const StartupDetails = () => {
     }
   };
 
-  const handleBetSold = async (betId: string) => {
-    // Remove the bet from the local state immediately
+  const handleBetSold = (betId: string) => {
+    // Immediately remove the bet from local state
     setUserBets(prevBets => prevBets.filter(bet => bet.id !== betId));
-    await fetchUserBets(); // Refresh the bets list from the server
   };
 
   if (loading) return <div>Loading...</div>;

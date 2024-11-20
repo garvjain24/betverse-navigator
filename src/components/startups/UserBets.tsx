@@ -18,20 +18,6 @@ interface UserBetsProps {
 const UserBets = ({ bets, onBetSold }: UserBetsProps) => {
   const handleSellBet = async (betId: string) => {
     try {
-      // Check if bet exists and is active
-      const { data: betCheck, error: checkError } = await supabase
-        .from('bets')
-        .select('status')
-        .eq('id', betId)
-        .single();
-
-      if (checkError) throw checkError;
-      
-      if (!betCheck || betCheck.status !== 'active') {
-        toast.error("This bet has already been sold or is no longer active");
-        return;
-      }
-
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Please login to sell bets");
@@ -44,8 +30,10 @@ const UserBets = ({ bets, onBetSold }: UserBetsProps) => {
       });
 
       if (error) throw error;
-      toast.success(`Bet sold successfully for ${data} coins!`);
+      
+      // Call onBetSold immediately after successful sale
       onBetSold(betId);
+      toast.success(`Bet sold successfully for ${data} coins!`);
     } catch (error) {
       toast.error("Error selling bet");
     }
