@@ -132,6 +132,33 @@ export type Database = {
           },
         ]
       }
+      milestones: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          required_coins: number
+          reward_coins: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          required_coins: number
+          reward_coins: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          required_coins?: number
+          reward_coins?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -311,6 +338,42 @@ export type Database = {
           },
         ]
       }
+      user_milestones: {
+        Row: {
+          claimed_at: string
+          id: string
+          milestone_id: string
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          id?: string
+          milestone_id: string
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          id?: string
+          milestone_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_milestones_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "milestones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_milestones_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -343,6 +406,13 @@ export type Database = {
           p_amount: number
         }
         Returns: string
+      }
+      sell_bet: {
+        Args: {
+          p_bet_id: string
+          p_user_id: string
+        }
+        Returns: number
       }
     }
     Enums: {
