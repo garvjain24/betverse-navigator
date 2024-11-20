@@ -90,7 +90,7 @@ const StartupDetails = () => {
           filter: `id=eq.${id}`
         },
         (payload) => {
-          if (payload.new && 'odds' in payload.new) {
+          if (payload.new && 'odds' in payload.new && typeof payload.new.odds === 'number') {
             setStartup(payload.new as Startup);
             updateOddsHistory(payload.new.odds);
           }
