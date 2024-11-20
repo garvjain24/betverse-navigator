@@ -144,6 +144,50 @@ export type Database = {
           },
         ]
       }
+      market_data: {
+        Row: {
+          closing_price: number | null
+          created_at: string
+          date: string
+          high_price: number | null
+          id: string
+          low_price: number | null
+          opening_price: number | null
+          startup_id: string | null
+          volume: number | null
+        }
+        Insert: {
+          closing_price?: number | null
+          created_at?: string
+          date?: string
+          high_price?: number | null
+          id?: string
+          low_price?: number | null
+          opening_price?: number | null
+          startup_id?: string | null
+          volume?: number | null
+        }
+        Update: {
+          closing_price?: number | null
+          created_at?: string
+          date?: string
+          high_price?: number | null
+          id?: string
+          low_price?: number | null
+          opening_price?: number | null
+          startup_id?: string | null
+          volume?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_data_startup_id_fkey"
+            columns: ["startup_id"]
+            isOneToOne: false
+            referencedRelation: "startups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media: {
         Row: {
           file_path: string
@@ -209,6 +253,60 @@ export type Database = {
           reward_coins?: number
         }
         Relationships: []
+      }
+      order_book: {
+        Row: {
+          created_at: string
+          filled_at: string | null
+          filled_price: number | null
+          id: string
+          order_type: string
+          price: number
+          quantity: number
+          startup_id: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          filled_at?: string | null
+          filled_price?: number | null
+          id?: string
+          order_type: string
+          price: number
+          quantity: number
+          startup_id?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          filled_at?: string | null
+          filled_price?: number | null
+          id?: string
+          order_type?: string
+          price?: number
+          quantity?: number
+          startup_id?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_book_startup_id_fkey"
+            columns: ["startup_id"]
+            isOneToOne: false
+            referencedRelation: "startups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_book_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -449,6 +547,12 @@ export type Database = {
           user_id: string
         }
         Returns: number
+      }
+      match_orders: {
+        Args: {
+          p_startup_id: string
+        }
+        Returns: undefined
       }
       place_bet: {
         Args: {
