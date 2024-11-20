@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const calculatePotentialReturn = (amount: number, odds: number) => {
-  // Simple calculation: amount * odds
   return Number((amount * odds).toFixed(2));
 };
 
@@ -23,24 +22,44 @@ const BetHistory = () => {
           return;
         }
 
-        const { data, error } = await supabase
-          .from('bets')
-          .select(`
-            *,
-            startup:startups(name, odds)
-          `)
-          .eq('user_id', session.user.id)
-          .order('created_at', { ascending: false });
+        // Fetch both active and closed bets
+        const [activeBetsResponse, closedBetsResponse] = await Promise.all([
+          supabase
+            .from('bets')
+            .select(`
+              *,
+              startup:startups(name, odds)
+            `)
+            .eq('user_id', session.user.id)
+            .order('created_at', { ascending: false }),
+          supabase
+            .from('closed_bets')
+            .select(`
+              *,
+              startup:startups(name, odds)
+            `)
+            .eq('user_id', session.user.id)
+            .order('closed_at', { ascending: false })
+        ]);
 
-        if (error) throw error;
+        if (activeBetsResponse.error) throw activeBetsResponse.error;
+        if (closedBetsResponse.error) throw closedBetsResponse.error;
         
-        // Calculate potential returns for each bet
-        const betsWithReturns = data.map(bet => ({
-          ...bet,
-          potential_return: calculatePotentialReturn(bet.amount, bet.startup?.odds || 1)
-        }));
+        // Combine and sort bets by date
+        const allBets = [
+          ...activeBetsResponse.data.map(bet => ({
+            ...bet,
+            isClosed: false,
+            date: bet.created_at
+          })),
+          ...closedBetsResponse.data.map(bet => ({
+            ...bet,
+            isClosed: true,
+            date: bet.closed_at
+          }))
+        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-        setBets(betsWithReturns);
+        setBets(allBets);
       } catch (error) {
         toast.error("Error fetching bet history");
         console.error("Bet history error:", error);
@@ -67,6 +86,8 @@ const BetHistory = () => {
               <TableHead>Amount</TableHead>
               <TableHead>Potential Return</TableHead>
               <TableHead>Status</TableHead>
+              {/* Add Sell Price column */}
+              <TableHead>Sell Price</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -78,15 +99,20 @@ const BetHistory = () => {
                 <TableCell>
                   <Badge
                     className={
-                      bet.status === 'won'
+                      bet.isClosed
+                        ? 'bg-gray-500'
+                        : bet.status === 'won'
                         ? 'bg-green-500'
                         : bet.status === 'lost'
                         ? 'bg-red-500'
                         : ''
                     }
                   >
-                    {bet.status}
+                    {bet.isClosed ? 'Closed' : bet.status}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  {bet.isClosed ? `$${bet.sell_price}` : '-'}
                 </TableCell>
               </TableRow>
             ))}

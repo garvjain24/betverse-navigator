@@ -54,6 +54,57 @@ export type Database = {
           },
         ]
       }
+      closed_bets: {
+        Row: {
+          amount: number
+          closed_at: string
+          created_at: string
+          id: string
+          potential_return: number
+          sell_price: number | null
+          startup_id: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          closed_at?: string
+          created_at?: string
+          id?: string
+          potential_return: number
+          sell_price?: number | null
+          startup_id?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          closed_at?: string
+          created_at?: string
+          id?: string
+          potential_return?: number
+          sell_price?: number | null
+          startup_id?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "closed_bets_startup_id_fkey"
+            columns: ["startup_id"]
+            isOneToOne: false
+            referencedRelation: "startups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "closed_bets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collaborators: {
         Row: {
           created_at: string
