@@ -90,8 +90,10 @@ const StartupDetails = () => {
           filter: `id=eq.${id}`
         },
         (payload) => {
-          setStartup(payload.new);
-          updateOddsHistory(payload.new.odds);
+          if (payload.new && 'odds' in payload.new) {
+            setStartup(payload.new as Startup);
+            updateOddsHistory(payload.new.odds);
+          }
         }
       )
       .subscribe();
