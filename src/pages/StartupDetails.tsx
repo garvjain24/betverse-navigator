@@ -58,7 +58,7 @@ const StartupDetails = () => {
           .single();
 
         if (error) throw error;
-        setStartup(data);
+        setStartup(data as Startup);
         updateOddsHistory(data.odds);
       } catch (error) {
         toast.error("Error fetching startup details");
@@ -79,7 +79,7 @@ const StartupDetails = () => {
         table: 'startups',
         filter: `id=eq.${id}`
       }, (payload) => {
-        setStartup(payload.new);
+        setStartup(payload.new as Startup);
         updateOddsHistory(payload.new.odds);
       })
       .subscribe();
