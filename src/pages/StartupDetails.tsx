@@ -23,12 +23,19 @@ interface Startup {
   active_sellers: number;
 }
 
+interface Bet {
+  id: string;
+  amount: number;
+  potential_return: number;
+  status: string;
+}
+
 const StartupDetails = () => {
   const { id } = useParams();
   const [startup, setStartup] = useState<Startup | null>(null);
-  const [userBets, setUserBets] = useState([]);
+  const [userBets, setUserBets] = useState<Bet[]>([]);
   const [loading, setLoading] = useState(true);
-  const [oddsHistory, setOddsHistory] = useState([]);
+  const [oddsHistory, setOddsHistory] = useState<Array<{ time: string; odds: number }>>([]);
 
   const fetchUserBets = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -78,8 +85,8 @@ const StartupDetails = () => {
         schema: 'public',
         table: 'startups',
         filter: `id=eq.${id}`
-      }, (payload) => {
-        setStartup(payload.new as Startup);
+      }, (payload: { new: Startup }) => {
+        setStartup(payload.new);
         updateOddsHistory(payload.new.odds);
       })
       .subscribe();
@@ -122,6 +129,12 @@ const StartupDetails = () => {
     }
   };
 
+  const handleBetSold = async (betId: string) => {
+    // Remove the bet from the local state immediately
+    setUserBets(prevBets => prevBets.filter(bet => bet.id !== betId));
+    await fetchUserBets(); // Refresh the bets list from the server
+  };
+
   if (loading) return <div>Loading...</div>;
   if (!startup) return <div>Startup not found</div>;
 
@@ -149,7 +162,7 @@ const StartupDetails = () => {
 
           <UserBets 
             bets={userBets} 
-            onBetSold={fetchUserBets}
+            onBetSold={handleBetSold}
           />
 
           <div className="grid grid-cols-3 gap-4">
