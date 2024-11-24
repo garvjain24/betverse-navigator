@@ -68,7 +68,9 @@ const StartupDetails = () => {
 
         if (error) throw error;
         setStartup(data as Startup);
-        updateOddsHistory(data.odds);
+        if (data) {
+          updateOddsHistory(data.odds);
+        }
       } catch (error) {
         toast.error("Error fetching startup details");
       } finally {
@@ -90,10 +92,11 @@ const StartupDetails = () => {
           table: 'startups',
           filter: `id=eq.${id}`
         },
-        (payload: RealtimePostgresChangesPayload<Startup>) => {
-          if (payload.new && 'odds' in payload.new) {
-            setStartup(payload.new as Startup);
-            updateOddsHistory(payload.new.odds);
+        (payload: RealtimePostgresChangesPayload<{ [key: string]: any }>) => {
+          const newData = payload.new;
+          if (newData && typeof newData === 'object' && 'odds' in newData) {
+            setStartup(prev => ({ ...prev, ...newData } as Startup));
+            updateOddsHistory(newData.odds);
           }
         }
       )
