@@ -5,30 +5,10 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useStartups } from "@/hooks/useStartups";
 
 const StartupCard = () => {
-  const [startups, setStartups] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchStartups = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('startups')
-          .select('*');
-
-        if (error) throw error;
-        setStartups(data);
-      } catch (error) {
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStartups();
-  }, []);
+  const { startups, loading, error } = useStartups();
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;

@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ChartBar, TrendingUp, Trophy } from "lucide-react";
@@ -6,70 +5,15 @@ import BetHistory from "@/components/dashboard/BetHistory";
 import ActiveBets from "@/components/dashboard/ActiveBets";
 import CoinBalance from "@/components/dashboard/CoinBalance";
 import TransactionHistory from "@/components/dashboard/TransactionHistory";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useDashboard } from "@/hooks/useDashboard";
 
 const Dashboard = () => {
-  const [totalBets, setTotalBets] = useState(0);
-  const [activeTrades, setActiveTrades] = useState(0);
-  const [milestonePoints, setMilestonePoints] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          toast.error("Not authenticated");
-          return;
-        }
-
-        // Fetch user profile data
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('total_bets')
-          .eq('id', session.user.id)
-          .single();
-
-        if (profileError) throw profileError;
-
-        // Fetch active bets count
-        const { data: activeBetsData, error: betsError } = await supabase
-          .from('bets')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .eq('status', 'active');
-
-        if (betsError) throw betsError;
-
-        setTotalBets(profileData.total_bets || 0);
-        setActiveTrades(activeBetsData?.length || 0);
-        setMilestonePoints((profileData.total_bets || 0) * 100);
-      } catch (error) {
-        toast.error("Error fetching dashboard data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel('dashboard_changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'profiles'
-      }, () => {
-        fetchDashboardData();
-      })
-      .subscribe();
-
-    return () => {
-      channel.unsubscribe();
-    };
-  }, []);
+  const { 
+    totalBets, 
+    activeTrades, 
+    milestonePoints, 
+    loading 
+  } = useDashboard();
 
   if (loading) return <div>Loading...</div>;
 
