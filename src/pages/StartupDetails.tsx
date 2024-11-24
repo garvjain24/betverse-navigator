@@ -91,8 +91,8 @@ const StartupDetails = () => {
           filter: `id=eq.${id}`
         },
         (payload: RealtimePostgresChangesPayload<Startup>) => {
-          if (payload.new) {
-            setStartup(payload.new);
+          if (payload.new && 'odds' in payload.new) {
+            setStartup(payload.new as Startup);
             updateOddsHistory(payload.new.odds);
           }
         }
