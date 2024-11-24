@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface Profile {
+  total_bets: number;
+}
+
 export const useDashboard = () => {
   const [totalBets, setTotalBets] = useState(0);
   const [activeTrades, setActiveTrades] = useState(0);
@@ -35,9 +39,9 @@ export const useDashboard = () => {
 
         if (betsError) throw betsError;
 
-        setTotalBets(profileData.total_bets || 0);
+        setTotalBets(profileData?.total_bets || 0);
         setActiveTrades(activeBetsData?.length || 0);
-        setMilestonePoints((profileData.total_bets || 0) * 100);
+        setMilestonePoints((profileData?.total_bets || 0) * 100);
       } catch (error) {
         toast.error("Error fetching dashboard data");
       } finally {
@@ -58,9 +62,10 @@ export const useDashboard = () => {
           table: 'profiles'
         },
         (payload) => {
-          if (payload.new && typeof payload.new === 'object') {
-            setTotalBets(payload.new.total_bets || 0);
-            setMilestonePoints((payload.new.total_bets || 0) * 100);
+          if (payload.new && typeof payload.new === 'object' && 'total_bets' in payload.new) {
+            const newProfile = payload.new as Profile;
+            setTotalBets(newProfile.total_bets || 0);
+            setMilestonePoints((newProfile.total_bets || 0) * 100);
           }
         }
       )

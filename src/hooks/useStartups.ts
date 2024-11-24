@@ -9,6 +9,15 @@ interface Startup {
   sector: string | null;
   stage: string | null;
   trending: boolean;
+  active_buyers?: number;
+  active_sellers?: number;
+  active_win_bets?: number;
+  active_fall_bets?: number;
+  created_at?: string;
+  growth_percentage?: number;
+  image_url?: string;
+  investors?: number;
+  status?: string;
 }
 
 export const useStartups = () => {
@@ -24,7 +33,14 @@ export const useStartups = () => {
           .select('*');
 
         if (error) throw error;
-        setStartups(data);
+        
+        // Transform the data to include the trending property
+        const transformedData: Startup[] = data.map(startup => ({
+          ...startup,
+          trending: startup.growth_percentage ? startup.growth_percentage > 10 : false
+        }));
+        
+        setStartups(transformedData);
       } catch (error: any) {
         setError(error.message);
       } finally {
@@ -46,12 +62,20 @@ export const useStartups = () => {
         },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setStartups(prev => [...prev, payload.new as Startup]);
+            const newStartup = {
+              ...payload.new,
+              trending: payload.new.growth_percentage ? payload.new.growth_percentage > 10 : false
+            } as Startup;
+            setStartups(prev => [...prev, newStartup]);
           } else if (payload.eventType === 'UPDATE') {
             setStartups(prev => 
               prev.map(startup => 
                 startup.id === payload.new.id 
-                  ? { ...startup, ...payload.new }
+                  ? { 
+                      ...startup, 
+                      ...payload.new, 
+                      trending: payload.new.growth_percentage ? payload.new.growth_percentage > 10 : false 
+                    }
                   : startup
               )
             );
