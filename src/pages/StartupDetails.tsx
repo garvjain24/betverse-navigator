@@ -10,6 +10,7 @@ import MarketActivity from "@/components/startups/MarketActivity";
 import UserBets from "@/components/startups/UserBets";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 interface Startup {
   id: string;
@@ -89,9 +90,9 @@ const StartupDetails = () => {
           table: 'startups',
           filter: `id=eq.${id}`
         },
-        (payload) => {
+        (payload: RealtimePostgresChangesPayload<Startup>) => {
           if (payload.new) {
-            setStartup(payload.new as Startup);
+            setStartup(payload.new);
             updateOddsHistory(payload.new.odds);
           }
         }
