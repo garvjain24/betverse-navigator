@@ -8,8 +8,7 @@ import UserLeaderboard from "@/components/startups/UserLeaderboard";
 import OddsHistory from "@/components/startups/OddsHistory";
 import MarketActivity from "@/components/startups/MarketActivity";
 import UserBets from "@/components/startups/UserBets";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { OddsHistoryChart } from "@/components/startups/OddsHistoryChart";
 import { useStartupDetails } from "@/hooks/useStartupDetails";
 
 const StartupDetails = () => {
@@ -46,7 +45,7 @@ const StartupDetails = () => {
             odds={startup.odds}
           />
 
-          <OddsHistory oddsHistory={oddsHistory} />
+          <OddsHistoryChart startupId={startup.id} />
 
           <UserBets 
             bets={userBets} 
