@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 const ActiveBets = () => {
   const [activeBets, setActiveBets] = useState([]);
@@ -95,6 +96,9 @@ const ActiveBets = () => {
                 <div className="text-sm text-muted-foreground">
                   ${bet.amount} at {bet.startup?.odds}x
                 </div>
+                <Badge variant={bet.bet_type === 'win' ? 'default' : 'destructive'}>
+                  {bet.bet_type.toUpperCase()}
+                </Badge>
               </div>
               <div className="flex items-center gap-2">
                 <div className={`flex items-center ${
@@ -118,7 +122,7 @@ const ActiveBets = () => {
             </div>
             <Progress
               value={Math.min(Math.abs(bet.startup?.growth_percentage || 0), 100)}
-              className="h-2"
+              className={`h-2 ${bet.bet_type === 'win' ? 'bg-green-100' : 'bg-red-100'}`}
             />
           </div>
         ))}

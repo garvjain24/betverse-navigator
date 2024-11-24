@@ -12,6 +12,7 @@ export type Database = {
       bets: {
         Row: {
           amount: number
+          bet_type: string
           created_at: string
           id: string
           potential_return: number
@@ -21,6 +22,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          bet_type?: string
           created_at?: string
           id?: string
           potential_return: number
@@ -30,6 +32,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          bet_type?: string
           created_at?: string
           id?: string
           potential_return?: number
@@ -57,6 +60,7 @@ export type Database = {
       closed_bets: {
         Row: {
           amount: number
+          bet_type: string
           closed_at: string
           created_at: string
           id: string
@@ -68,6 +72,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          bet_type?: string
           closed_at?: string
           created_at?: string
           id?: string
@@ -79,6 +84,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          bet_type?: string
           closed_at?: string
           created_at?: string
           id?: string
@@ -380,7 +386,9 @@ export type Database = {
       startups: {
         Row: {
           active_buyers: number | null
+          active_fall_bets: number | null
           active_sellers: number | null
+          active_win_bets: number | null
           created_at: string
           description: string | null
           growth_percentage: number | null
@@ -395,7 +403,9 @@ export type Database = {
         }
         Insert: {
           active_buyers?: number | null
+          active_fall_bets?: number | null
           active_sellers?: number | null
+          active_win_bets?: number | null
           created_at?: string
           description?: string | null
           growth_percentage?: number | null
@@ -410,7 +420,9 @@ export type Database = {
         }
         Update: {
           active_buyers?: number | null
+          active_fall_bets?: number | null
           active_sellers?: number | null
+          active_win_bets?: number | null
           created_at?: string
           description?: string | null
           growth_percentage?: number | null
@@ -554,14 +566,24 @@ export type Database = {
         }
         Returns: undefined
       }
-      place_bet: {
-        Args: {
-          p_user_id: string
-          p_startup_id: string
-          p_amount: number
-        }
-        Returns: string
-      }
+      place_bet:
+        | {
+            Args: {
+              p_user_id: string
+              p_startup_id: string
+              p_amount: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_user_id: string
+              p_startup_id: string
+              p_amount: number
+              p_bet_type: string
+            }
+            Returns: string
+          }
       sell_bet: {
         Args: {
           p_bet_id: string

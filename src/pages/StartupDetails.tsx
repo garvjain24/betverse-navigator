@@ -10,7 +10,6 @@ import MarketActivity from "@/components/startups/MarketActivity";
 import UserBets from "@/components/startups/UserBets";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 interface Startup {
   id: string;
@@ -20,8 +19,8 @@ interface Startup {
   growth_percentage: number;
   investors: number;
   stage: string | null;
-  active_buyers: number;
-  active_sellers: number;
+  active_win_bets: number;
+  active_fall_bets: number;
 }
 
 interface Bet {
@@ -29,6 +28,7 @@ interface Bet {
   amount: number;
   potential_return: number;
   status: string;
+  bet_type: string;
 }
 
 const StartupDetails = () => {
@@ -81,7 +81,7 @@ const StartupDetails = () => {
     // Subscribe to real-time updates
     const channel = supabase
       .channel('startup_changes')
-      .on<RealtimePostgresChangesPayload<Startup>>(
+      .on(
         'postgres_changes',
         {
           event: '*',
@@ -90,7 +90,7 @@ const StartupDetails = () => {
           filter: `id=eq.${id}`
         },
         (payload) => {
-          if (payload.new && 'odds' in payload.new && typeof payload.new.odds === 'number') {
+          if (payload.new) {
             setStartup(payload.new as Startup);
             updateOddsHistory(payload.new.odds);
           }
@@ -137,7 +137,6 @@ const StartupDetails = () => {
   };
 
   const handleBetSold = (betId: string) => {
-    // Immediately remove the bet from local state
     setUserBets(prevBets => prevBets.filter(bet => bet.id !== betId));
   };
 
@@ -159,8 +158,8 @@ const StartupDetails = () => {
           </div>
           
           <MarketActivity 
-            activeBuyers={startup.active_buyers}
-            activeSellers={startup.active_sellers}
+            activeWinBets={startup.active_win_bets}
+            activeFallBets={startup.active_fall_bets}
             odds={startup.odds}
           />
 
