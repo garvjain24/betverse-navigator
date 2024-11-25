@@ -4,12 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Bet } from "@/types/betting";
-
-interface ExtendedBet extends Bet {
-  isClosed: boolean;
-  date: string;
-}
+import { ExtendedBet } from "@/types/betting";
 
 const BetHistory = () => {
   const [bets, setBets] = useState<ExtendedBet[]>([]);
@@ -25,7 +20,6 @@ const BetHistory = () => {
           return;
         }
 
-        // Subscribe to real-time updates for active bets
         const betsSubscription = supabase
           .channel('active_bets')
           .on(
@@ -54,7 +48,6 @@ const BetHistory = () => {
 
     const fetchAllBets = async (userId: string) => {
       try {
-        // Fetch both active and closed bets
         const [activeBetsResponse, closedBetsResponse] = await Promise.all([
           supabase
             .from('bets')
@@ -77,7 +70,6 @@ const BetHistory = () => {
         if (activeBetsResponse.error) throw activeBetsResponse.error;
         if (closedBetsResponse.error) throw closedBetsResponse.error;
         
-        // Combine and sort bets by date
         const allBets = [
           ...activeBetsResponse.data.map(bet => ({
             ...bet,
@@ -88,14 +80,13 @@ const BetHistory = () => {
           ...closedBetsResponse.data.map(bet => ({
             ...bet,
             isClosed: true,
-            date: bet.closed_at,
+            date: bet.closed_at || bet.created_at,
             final_profit_loss: bet.sell_price ? bet.sell_price - bet.amount : 0
           }))
         ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         setBets(allBets);
 
-        // Calculate total profit/loss
         const total = allBets.reduce((acc, bet) => {
           return acc + (bet.isClosed ? (bet.final_profit_loss || 0) : (bet.current_profit_loss || 0));
         }, 0);

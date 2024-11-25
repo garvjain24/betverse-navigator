@@ -52,10 +52,13 @@ export const useStartupDetails = (startupId: string | undefined) => {
           .single();
 
         if (error) throw error;
-        setStartup({
+        
+        const startupData = {
           ...data,
           trending: data.growth_percentage ? data.growth_percentage > 10 : false
-        });
+        };
+        
+        setStartup(startupData);
       } catch (error) {
         toast.error("Error fetching startup details");
       } finally {
@@ -78,10 +81,11 @@ export const useStartupDetails = (startupId: string | undefined) => {
         },
         (payload) => {
           if (payload.new) {
+            const newData = payload.new as Startup;
             setStartup(prev => ({
               ...prev,
-              ...payload.new,
-              trending: payload.new.growth_percentage ? payload.new.growth_percentage > 10 : false
+              ...newData,
+              trending: newData.growth_percentage ? newData.growth_percentage > 10 : false
             }));
           }
         }

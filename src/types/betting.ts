@@ -40,3 +40,10 @@ export interface Startup {
   investors?: number;
   status?: string;
 }
+
+export interface ExtendedBet extends Bet {
+  isClosed: boolean;
+  date: string;
+  sell_price?: number;
+  closed_at?: string;
+}
