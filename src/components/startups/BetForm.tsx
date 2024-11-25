@@ -23,7 +23,7 @@ const BetForm = ({ startupId, odds, onBetPlaced }: BetFormProps) => {
       const betAmount = parseFloat(amount);
       
       if (!betAmount || betAmount <= 0) {
-        toast.error("Bet amount must be greater than 0");
+        toast.error("Please enter a valid amount greater than 0 coins");
         return;
       }
 
@@ -64,25 +64,25 @@ const BetForm = ({ startupId, odds, onBetPlaced }: BetFormProps) => {
             <Input
               id="amount"
               type="number"
-              min="0.01"
-              step="0.01"
+              min="1"
+              step="1"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="Enter amount"
+              placeholder="Enter amount (minimum 1 coin)"
             />
           </div>
           
           <div className="flex gap-4">
             <Button
               onClick={() => handleSubmit('win')}
-              disabled={loading}
+              disabled={loading || !amount || parseFloat(amount) < 1}
               className="flex-1"
             >
               Bet Win ({odds}x)
             </Button>
             <Button
               onClick={() => handleSubmit('fall')}
-              disabled={loading}
+              disabled={loading || !amount || parseFloat(amount) < 1}
               variant="destructive"
               className="flex-1"
             >

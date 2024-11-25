@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUp, ArrowDown, TrendingUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface MarketActivityProps {
   activeWinBets: number;
@@ -11,11 +12,21 @@ interface MarketActivityProps {
 const MarketActivity = ({ activeWinBets, activeFallBets, odds }: MarketActivityProps) => {
   const totalBets = activeWinBets + activeFallBets;
   const winPercentage = totalBets > 0 ? (activeWinBets / totalBets) * 100 : 50;
+  const marketSentiment = winPercentage > 60 ? 'Bullish' : winPercentage < 40 ? 'Bearish' : 'Neutral';
+  const sentimentColor = 
+    marketSentiment === 'Bullish' ? 'bg-green-500' :
+    marketSentiment === 'Bearish' ? 'bg-red-500' : 'bg-yellow-500';
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Market Activity</CardTitle>
+        <CardTitle className="flex justify-between items-center">
+          Market Activity
+          <Badge className={sentimentColor}>
+            <TrendingUp className="h-4 w-4 mr-1" />
+            {marketSentiment}
+          </Badge>
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
@@ -36,7 +47,12 @@ const MarketActivity = ({ activeWinBets, activeFallBets, odds }: MarketActivityP
         </div>
         <div>
           <div className="text-sm font-medium mb-2">Current Odds</div>
-          <div className="text-3xl font-bold">{odds}x</div>
+          <div className="text-3xl font-bold flex items-center gap-2">
+            {odds}x
+            <Badge variant="outline" className="ml-2">
+              {odds > 2 ? 'High Risk' : odds > 1.5 ? 'Medium Risk' : 'Low Risk'}
+            </Badge>
+          </div>
         </div>
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
@@ -47,6 +63,11 @@ const MarketActivity = ({ activeWinBets, activeFallBets, odds }: MarketActivityP
             value={winPercentage}
             className="h-2"
           />
+          <div className="text-sm text-muted-foreground mt-1">
+            {winPercentage > 60 ? 'Strong buying pressure' : 
+             winPercentage < 40 ? 'Strong selling pressure' : 
+             'Balanced market activity'}
+          </div>
         </div>
       </CardContent>
     </Card>
