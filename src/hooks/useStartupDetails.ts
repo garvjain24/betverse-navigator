@@ -20,6 +20,8 @@ interface Bet {
   potential_return: number;
   status: string;
   bet_type: string;
+  created_at: string;
+  odds_at_time: number;
 }
 
 export const useStartupDetails = (startupId: string | undefined) => {
@@ -108,9 +110,15 @@ export const useStartupDetails = (startupId: string | undefined) => {
       )
       .subscribe();
 
+    // Set up interval for odds updates
+    const oddsInterval = setInterval(() => {
+      fetchStartup();
+    }, 5000);
+
     return () => {
       startupChannel.unsubscribe();
       betsChannel.unsubscribe();
+      clearInterval(oddsInterval);
     };
   }, [startupId]);
 

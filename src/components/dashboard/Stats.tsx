@@ -8,7 +8,8 @@ const Stats = () => {
     totalBets: 0,
     activeBets: 0,
     closedBets: 0,
-    totalProfitLoss: 0
+    totalProfitLoss: 0,
+    currentProfitLoss: 0
   });
 
   useEffect(() => {
@@ -20,8 +21,9 @@ const Stats = () => {
         const [activeBets, closedBets] = await Promise.all([
           supabase
             .from('bets')
-            .select('current_profit_loss')
-            .eq('user_id', session.user.id),
+            .select('*, startup:startups(odds)')
+            .eq('user_id', session.user.id)
+            .eq('status', 'active'),
           supabase
             .from('closed_bets')
             .select('final_profit_loss')
@@ -31,16 +33,22 @@ const Stats = () => {
         if (activeBets.error) throw activeBets.error;
         if (closedBets.error) throw closedBets.error;
 
-        const totalProfitLoss = [
-          ...activeBets.data.map(bet => bet.current_profit_loss || 0),
-          ...closedBets.data.map(bet => bet.final_profit_loss || 0)
-        ].reduce((acc, val) => acc + val, 0);
+        // Calculate current P/L for active bets
+        const currentPL = activeBets.data.reduce((acc, bet) => {
+          const profitLoss = (bet.startup.odds - bet.odds_at_time) * bet.amount;
+          return acc + profitLoss;
+        }, 0);
+
+        // Calculate total P/L including closed bets
+        const closedPL = closedBets.data.reduce((acc, bet) => acc + (bet.final_profit_loss || 0), 0);
+        const totalPL = currentPL + closedPL;
 
         setStats({
           totalBets: activeBets.data.length + closedBets.data.length,
           activeBets: activeBets.data.length,
           closedBets: closedBets.data.length,
-          totalProfitLoss
+          totalProfitLoss: totalPL,
+          currentProfitLoss: currentPL
         });
       } catch (error) {
         toast.error("Error fetching stats");
@@ -49,6 +57,7 @@ const Stats = () => {
 
     fetchStats();
 
+    // Set up real-time updates
     const subscription = supabase
       .channel('stats_changes')
       .on(
@@ -71,13 +80,17 @@ const Stats = () => {
       )
       .subscribe();
 
+    // Update stats every 5 seconds to reflect odds changes
+    const interval = setInterval(fetchStats, 5000);
+
     return () => {
       subscription.unsubscribe();
+      clearInterval(interval);
     };
   }, []);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
       <Card>
         <CardHeader>
           <CardTitle className="text-sm font-medium">Total Bets</CardTitle>
@@ -102,6 +115,19 @@ const Stats = () => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.closedBets}</div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Current P/L</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className={`text-2xl font-bold ${
+            stats.currentProfitLoss >= 0 ? 'text-green-500' : 'text-red-500'
+          }`}>
+            {stats.currentProfitLoss.toFixed(2)}
+          </div>
         </CardContent>
       </Card>
 
