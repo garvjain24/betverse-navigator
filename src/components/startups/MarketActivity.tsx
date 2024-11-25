@@ -12,19 +12,26 @@ interface MarketActivityProps {
 const MarketActivity = ({ activeWinBets, activeFallBets, odds }: MarketActivityProps) => {
   const totalBets = activeWinBets + activeFallBets;
   const winPercentage = totalBets > 0 ? (activeWinBets / totalBets) * 100 : 50;
-  const marketSentiment = winPercentage > 60 ? 'Bullish' : winPercentage < 40 ? 'Bearish' : 'Neutral';
-  const sentimentColor = 
-    marketSentiment === 'Bullish' ? 'bg-green-500' :
-    marketSentiment === 'Bearish' ? 'bg-red-500' : 'bg-yellow-500';
+  
+  const getMarketSentiment = (percentage: number) => {
+    if (percentage > 70) return { label: 'Very Bullish', color: 'bg-green-600' };
+    if (percentage > 60) return { label: 'Bullish', color: 'bg-green-500' };
+    if (percentage > 40) return { label: 'Neutral', color: 'bg-yellow-500' };
+    if (percentage > 30) return { label: 'Bearish', color: 'bg-red-500' };
+    return { label: 'Very Bearish', color: 'bg-red-600' };
+  };
+
+  const sentiment = getMarketSentiment(winPercentage);
+  const riskLevel = odds > 3 ? 'High Risk' : odds > 2 ? 'Medium Risk' : 'Low Risk';
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
           Market Activity
-          <Badge className={sentimentColor}>
+          <Badge className={sentiment.color}>
             <TrendingUp className="h-4 w-4 mr-1" />
-            {marketSentiment}
+            {sentiment.label}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -45,15 +52,21 @@ const MarketActivity = ({ activeWinBets, activeFallBets, odds }: MarketActivityP
             <div className="text-2xl text-red-600">{activeFallBets || 0}</div>
           </div>
         </div>
+
         <div>
           <div className="text-sm font-medium mb-2">Current Odds</div>
           <div className="text-3xl font-bold flex items-center gap-2">
-            {odds}x
-            <Badge variant="outline" className="ml-2">
-              {odds > 2 ? 'High Risk' : odds > 1.5 ? 'Medium Risk' : 'Low Risk'}
+            {odds.toFixed(2)}x
+            <Badge variant="outline" className={`ml-2 ${
+              odds > 3 ? 'border-red-500 text-red-500' :
+              odds > 2 ? 'border-yellow-500 text-yellow-500' :
+              'border-green-500 text-green-500'
+            }`}>
+              {riskLevel}
             </Badge>
           </div>
         </div>
+
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>Market Sentiment</span>
@@ -61,11 +74,17 @@ const MarketActivity = ({ activeWinBets, activeFallBets, odds }: MarketActivityP
           </div>
           <Progress 
             value={winPercentage}
-            className="h-2"
+            className={`h-2 ${
+              winPercentage > 60 ? 'bg-green-100' :
+              winPercentage < 40 ? 'bg-red-100' :
+              'bg-yellow-100'
+            }`}
           />
           <div className="text-sm text-muted-foreground mt-1">
-            {winPercentage > 60 ? 'Strong buying pressure' : 
-             winPercentage < 40 ? 'Strong selling pressure' : 
+            {winPercentage > 70 ? 'Very strong buying pressure' :
+             winPercentage > 60 ? 'Strong buying pressure' :
+             winPercentage < 30 ? 'Very strong selling pressure' :
+             winPercentage < 40 ? 'Strong selling pressure' :
              'Balanced market activity'}
           </div>
         </div>
