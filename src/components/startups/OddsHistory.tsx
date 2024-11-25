@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface OddsHistoryProps {
-  oddsHistory: Array<{ time: string; odds: number }>;
   startupId: string;
 }
 
@@ -26,12 +26,13 @@ const OddsHistory = ({ startupId }: OddsHistoryProps) => {
 
         const formattedData = data.map(item => ({
           time: format(new Date(item.created_at), 'HH:mm'),
-          odds: item.closing_price
+          odds: item.closing_price || 0
         }));
 
         setHistoryData(formattedData);
       } catch (error) {
         console.error('Error fetching odds history:', error);
+        toast.error("Failed to load odds history");
       } finally {
         setLoading(false);
       }
@@ -53,7 +54,7 @@ const OddsHistory = ({ startupId }: OddsHistoryProps) => {
         (payload) => {
           setHistoryData(prev => [...prev, {
             time: format(new Date(payload.new.created_at), 'HH:mm'),
-            odds: payload.new.closing_price
+            odds: payload.new.closing_price || 0
           }]);
         }
       )
@@ -64,7 +65,35 @@ const OddsHistory = ({ startupId }: OddsHistoryProps) => {
     };
   }, [startupId]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Odds History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[200px] flex items-center justify-center">
+            Loading...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (historyData.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Odds History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[200px] flex items-center justify-center text-gray-500">
+            No historical data available
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -80,7 +109,10 @@ const OddsHistory = ({ startupId }: OddsHistoryProps) => {
                 dataKey="time"
                 tickFormatter={(value) => format(new Date(value), 'HH:mm')}
               />
-              <YAxis domain={['dataMin', 'dataMax']} />
+              <YAxis 
+                domain={['auto', 'auto']}
+                tickFormatter={(value) => `${value.toFixed(2)}x`}
+              />
               <Tooltip 
                 labelFormatter={(value) => `Time: ${value}`}
                 formatter={(value: number) => [`${value.toFixed(2)}x`, 'Odds']}

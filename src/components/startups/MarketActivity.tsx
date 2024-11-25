@@ -1,95 +1,129 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { ArrowUp, ArrowDown, TrendingUp } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 interface MarketActivityProps {
-  activeWinBets: number;
-  activeFallBets: number;
-  odds: number;
+  startupId: string;
 }
 
-const MarketActivity = ({ activeWinBets, activeFallBets, odds }: MarketActivityProps) => {
-  const totalBets = activeWinBets + activeFallBets;
-  const winPercentage = totalBets > 0 ? (activeWinBets / totalBets) * 100 : 50;
-  
-  const getMarketSentiment = (percentage: number) => {
-    if (percentage > 70) return { label: 'Very Bullish', color: 'bg-green-600' };
-    if (percentage > 60) return { label: 'Bullish', color: 'bg-green-500' };
-    if (percentage > 40) return { label: 'Neutral', color: 'bg-yellow-500' };
-    if (percentage > 30) return { label: 'Bearish', color: 'bg-red-500' };
-    return { label: 'Very Bearish', color: 'bg-red-600' };
+const MarketActivity = ({ startupId }: MarketActivityProps) => {
+  const [marketData, setMarketData] = useState({
+    currentOdds: 0,
+    volume: 0,
+    sentiment: 'neutral',
+    growthPercentage: 0
+  });
+
+  useEffect(() => {
+    const fetchMarketData = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('startups')
+          .select('odds, growth_percentage, active_win_bets, active_fall_bets')
+          .eq('id', startupId)
+          .single();
+
+        if (error) throw error;
+
+        const totalBets = (data.active_win_bets || 0) + (data.active_fall_bets || 0);
+        const winRatio = totalBets > 0 ? (data.active_win_bets || 0) / totalBets : 0.5;
+
+        let sentiment = 'neutral';
+        if (winRatio > 0.7) sentiment = 'bullish';
+        else if (winRatio < 0.3) sentiment = 'bearish';
+
+        setMarketData({
+          currentOdds: data.odds,
+          volume: totalBets,
+          sentiment,
+          growthPercentage: data.growth_percentage || 0
+        });
+      } catch (error) {
+        console.error('Error fetching market data:', error);
+        toast.error("Failed to load market data");
+      }
+    };
+
+    fetchMarketData();
+
+    const subscription = supabase
+      .channel(`startup_${startupId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'startups',
+          filter: `id=eq.${startupId}`
+        },
+        fetchMarketData
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [startupId]);
+
+  const getSentimentIcon = () => {
+    switch (marketData.sentiment) {
+      case 'bullish':
+        return <TrendingUp className="w-6 h-6 text-green-500" />;
+      case 'bearish':
+        return <TrendingDown className="w-6 h-6 text-red-500" />;
+      default:
+        return <Minus className="w-6 h-6 text-gray-500" />;
+    }
   };
 
-  const sentiment = getMarketSentiment(winPercentage);
-  const riskLevel = odds > 3 ? 'High Risk' : odds > 2 ? 'Medium Risk' : 'Low Risk';
-
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex justify-between items-center">
-          Market Activity
-          <Badge className={sentiment.color}>
-            <TrendingUp className="h-4 w-4 mr-1" />
-            {sentiment.label}
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <ArrowUp className="h-4 w-4 text-green-500" />
-              <div className="text-sm font-medium">Win Bets</div>
-            </div>
-            <div className="text-2xl text-green-600">{activeWinBets || 0}</div>
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <ArrowDown className="h-4 w-4 text-red-500" />
-              <div className="text-sm font-medium">Fall Bets</div>
-            </div>
-            <div className="text-2xl text-red-600">{activeFallBets || 0}</div>
-          </div>
-        </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Current Odds</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{marketData.currentOdds.toFixed(2)}x</div>
+        </CardContent>
+      </Card>
 
-        <div>
-          <div className="text-sm font-medium mb-2">Current Odds</div>
-          <div className="text-3xl font-bold flex items-center gap-2">
-            {odds.toFixed(2)}x
-            <Badge variant="outline" className={`ml-2 ${
-              odds > 3 ? 'border-red-500 text-red-500' :
-              odds > 2 ? 'border-yellow-500 text-yellow-500' :
-              'border-green-500 text-green-500'
-            }`}>
-              {riskLevel}
-            </Badge>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">24h Change</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className={`text-2xl font-bold flex items-center gap-2 ${
+            marketData.growthPercentage > 0 ? 'text-green-500' : 
+            marketData.growthPercentage < 0 ? 'text-red-500' : 'text-gray-500'
+          }`}>
+            {marketData.growthPercentage > 0 ? '+' : ''}{marketData.growthPercentage.toFixed(2)}%
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Market Sentiment</span>
-            <span>{Math.round(winPercentage)}% Win / {Math.round(100 - winPercentage)}% Fall</span>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Volume (24h)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{marketData.volume}</div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Market Sentiment</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2">
+            {getSentimentIcon()}
+            <span className="text-2xl font-bold capitalize">{marketData.sentiment}</span>
           </div>
-          <Progress 
-            value={winPercentage}
-            className={`h-2 ${
-              winPercentage > 60 ? 'bg-green-100' :
-              winPercentage < 40 ? 'bg-red-100' :
-              'bg-yellow-100'
-            }`}
-          />
-          <div className="text-sm text-muted-foreground mt-1">
-            {winPercentage > 70 ? 'Very strong buying pressure' :
-             winPercentage > 60 ? 'Strong buying pressure' :
-             winPercentage < 30 ? 'Very strong selling pressure' :
-             winPercentage < 40 ? 'Strong selling pressure' :
-             'Balanced market activity'}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
