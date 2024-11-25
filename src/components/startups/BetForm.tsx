@@ -19,6 +19,13 @@ const BetForm = () => {
     setLoading(true);
 
     try {
+      // Validate bet amount
+      const betAmount = Number(amount);
+      if (betAmount <= 0) {
+        toast.error("Bet amount must be greater than 0");
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Please login to place bets");
@@ -28,7 +35,7 @@ const BetForm = () => {
       const { data, error } = await supabase.rpc('place_bet', {
         p_user_id: session.user.id,
         p_startup_id: startupId,
-        p_amount: Number(amount),
+        p_amount: betAmount,
         p_bet_type: betType
       });
 
@@ -94,7 +101,8 @@ const BetForm = () => {
               placeholder="Enter amount..."
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              min="0"
+              min="1"
+              step="1"
               disabled={loading}
             />
           </div>
