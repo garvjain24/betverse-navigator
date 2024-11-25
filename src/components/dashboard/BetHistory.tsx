@@ -91,10 +91,10 @@ const BetHistory = () => {
         setBets(allBets);
 
         const total = allBets.reduce((acc, bet) => {
-          if (bet.isClosed) {
-            return acc + bet.final_profit_loss;
-          } else {
+          if ('current_profit_loss' in bet) {
             return acc + bet.current_profit_loss;
+          } else {
+            return acc + bet.final_profit_loss;
           }
         }, 0);
 
@@ -144,11 +144,11 @@ const BetHistory = () => {
                 </TableCell>
                 <TableCell>
                   <span className={
-                    (bet.isClosed ? bet.final_profit_loss : bet.current_profit_loss) >= 0
+                    ('current_profit_loss' in bet ? bet.current_profit_loss : bet.final_profit_loss) >= 0
                       ? "text-green-500"
                       : "text-red-500"
                   }>
-                    {(bet.isClosed ? bet.final_profit_loss : bet.current_profit_loss).toFixed(2)}
+                    {('current_profit_loss' in bet ? bet.current_profit_loss : bet.final_profit_loss).toFixed(2)}
                   </span>
                 </TableCell>
                 <TableCell>
