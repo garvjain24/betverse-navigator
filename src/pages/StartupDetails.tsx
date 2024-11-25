@@ -35,11 +35,7 @@ const StartupDetails = () => {
             </Badge>
           </div>
           
-          <MarketActivity 
-            activeWinBets={startup.active_win_bets}
-            activeFallBets={startup.active_fall_bets}
-            odds={startup.odds}
-          />
+          <MarketActivity startupId={startup.id} />
 
           <OddsHistoryChart startupId={startup.id} />
 

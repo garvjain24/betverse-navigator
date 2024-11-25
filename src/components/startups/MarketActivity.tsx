@@ -6,11 +6,14 @@ import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 interface MarketActivityProps {
   startupId: string;
+  activeWinBets?: number;
+  activeFallBets?: number;
+  odds?: number;
 }
 
-const MarketActivity = ({ startupId }: MarketActivityProps) => {
+const MarketActivity = ({ startupId, activeWinBets = 0, activeFallBets = 0, odds = 0 }: MarketActivityProps) => {
   const [marketData, setMarketData] = useState({
-    currentOdds: 0,
+    currentOdds: odds,
     volume: 0,
     sentiment: 'neutral',
     growthPercentage: 0
