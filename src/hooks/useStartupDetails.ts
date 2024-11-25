@@ -1,28 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-interface Startup {
-  id: string;
-  name: string;
-  description: string | null;
-  odds: number;
-  growth_percentage: number;
-  investors: number;
-  stage: string | null;
-  active_win_bets: number;
-  active_fall_bets: number;
-}
-
-interface Bet {
-  id: string;
-  amount: number;
-  potential_return: number;
-  status: string;
-  bet_type: string;
-  created_at: string;
-  odds_at_time: number;
-}
+import { Startup, Bet } from "@/types/betting";
 
 export const useStartupDetails = (startupId: string | undefined) => {
   const [startup, setStartup] = useState<Startup | null>(null);
@@ -35,7 +14,10 @@ export const useStartupDetails = (startupId: string | undefined) => {
 
     const { data, error } = await supabase
       .from('bets')
-      .select('*')
+      .select(`
+        *,
+        startup:startups(name, odds)
+      `)
       .eq('startup_id', startupId)
       .eq('user_id', session.user.id)
       .eq('status', 'active');
@@ -44,7 +26,14 @@ export const useStartupDetails = (startupId: string | undefined) => {
       toast.error("Error fetching user bets");
       return;
     }
-    setUserBets(data || []);
+
+    const betsWithProfitLoss = data.map(bet => ({
+      ...bet,
+      odds_at_time: bet.startup.odds,
+      current_profit_loss: (bet.startup.odds - bet.odds_at_time) * bet.amount
+    }));
+
+    setUserBets(betsWithProfitLoss);
   };
 
   const handleBetSold = (betId: string) => {
@@ -74,7 +63,6 @@ export const useStartupDetails = (startupId: string | undefined) => {
     fetchStartup();
     fetchUserBets();
 
-    // Subscribe to real-time updates for startup data
     const startupChannel = supabase
       .channel(`startup_${startupId}`)
       .on(
@@ -93,7 +81,6 @@ export const useStartupDetails = (startupId: string | undefined) => {
       )
       .subscribe();
 
-    // Subscribe to real-time updates for bets
     const betsChannel = supabase
       .channel(`bets_${startupId}`)
       .on(
@@ -110,15 +97,9 @@ export const useStartupDetails = (startupId: string | undefined) => {
       )
       .subscribe();
 
-    // Set up interval for odds updates
-    const oddsInterval = setInterval(() => {
-      fetchStartup();
-    }, 5000);
-
     return () => {
       startupChannel.unsubscribe();
       betsChannel.unsubscribe();
-      clearInterval(oddsInterval);
     };
   }, [startupId]);
 

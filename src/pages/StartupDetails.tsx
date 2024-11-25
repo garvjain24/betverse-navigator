@@ -1,14 +1,12 @@
-import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, DollarSign, TrendingUp } from "lucide-react";
 import BetForm from "@/components/startups/BetForm";
 import UserLeaderboard from "@/components/startups/UserLeaderboard";
-import OddsHistory from "@/components/startups/OddsHistory";
+import { OddsHistoryChart } from "@/components/startups/OddsHistoryChart";
 import MarketActivity from "@/components/startups/MarketActivity";
 import UserBets from "@/components/startups/UserBets";
-import { OddsHistoryChart } from "@/components/startups/OddsHistoryChart";
 import { useStartupDetails } from "@/hooks/useStartupDetails";
 
 const StartupDetails = () => {
@@ -17,9 +15,7 @@ const StartupDetails = () => {
     startup, 
     userBets, 
     loading, 
-    oddsHistory,
-    handleBetSold,
-    updateRandomOdds 
+    handleBetSold 
   } = useStartupDetails(id);
 
   if (loading) return <div>Loading...</div>;
@@ -69,7 +65,11 @@ const StartupDetails = () => {
         </div>
 
         <div className="space-y-6 w-full md:w-96">
-          <BetForm />
+          <BetForm 
+            startupId={startup.id} 
+            odds={startup.odds}
+            onBetPlaced={() => {}}
+          />
           <UserLeaderboard startupId={id} />
         </div>
       </div>

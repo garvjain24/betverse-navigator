@@ -1,12 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-
-interface OddsHistoryEntry {
-  odds: number;
-  win_volume: number;
-  fall_volume: number;
-  created_at: string;
-}
+import { OddsHistoryEntry } from "@/types/betting";
 
 export const useOddsHistory = (startupId: string, timeframe: '1h' | '1d' | '1w' | '1m' = '1h') => {
   const [history, setHistory] = useState<OddsHistoryEntry[]>([]);
@@ -23,14 +17,22 @@ export const useOddsHistory = (startupId: string, timeframe: '1h' | '1d' | '1w' 
 
       try {
         const { data, error } = await supabase
-          .from('odds_history')
-          .select('odds, win_volume, fall_volume, created_at')
+          .from('market_data')
+          .select('closing_price as odds, volume as win_volume, created_at')
           .eq('startup_id', startupId)
           .gte('created_at', `now() - interval '${timeFrameMap[timeframe]}'`)
           .order('created_at', { ascending: true });
 
         if (error) throw error;
-        setHistory(data || []);
+        
+        const formattedData: OddsHistoryEntry[] = data.map(entry => ({
+          odds: entry.odds,
+          win_volume: entry.win_volume || 0,
+          fall_volume: 0, // Default to 0 as we don't track this separately yet
+          created_at: entry.created_at
+        }));
+        
+        setHistory(formattedData);
       } catch (error) {
         console.error('Error fetching odds history:', error);
       } finally {
@@ -40,19 +42,24 @@ export const useOddsHistory = (startupId: string, timeframe: '1h' | '1d' | '1w' 
 
     fetchOddsHistory();
 
-    // Subscribe to real-time updates
     const channel = supabase
-      .channel(`odds_history:${startupId}`)
+      .channel(`market_data:${startupId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'odds_history',
+          table: 'market_data',
           filter: `startup_id=eq.${startupId}`
         },
         (payload) => {
-          setHistory(prev => [...prev, payload.new as OddsHistoryEntry]);
+          const newEntry: OddsHistoryEntry = {
+            odds: payload.new.closing_price,
+            win_volume: payload.new.volume || 0,
+            fall_volume: 0,
+            created_at: payload.new.created_at
+          };
+          setHistory(prev => [...prev, newEntry]);
         }
       )
       .subscribe();

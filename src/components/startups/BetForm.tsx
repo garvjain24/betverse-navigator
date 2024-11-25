@@ -22,7 +22,6 @@ const BetForm = ({ startupId, odds, onBetPlaced }: BetFormProps) => {
       
       const betAmount = parseFloat(amount);
       
-      // Validate bet amount
       if (!betAmount || betAmount <= 0) {
         toast.error("Bet amount must be greater than 0");
         return;
