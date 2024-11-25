@@ -17,9 +17,8 @@ export interface Bet {
 }
 
 export interface OddsHistoryEntry {
-  odds: number;
-  win_volume: number;
-  fall_volume: number;
+  closing_price: number;
+  volume: number;
   created_at: string;
 }
 
@@ -30,7 +29,7 @@ export interface Startup {
   odds: number;
   sector: string | null;
   stage: string | null;
-  trending: boolean;
+  trending?: boolean;
   active_buyers?: number;
   active_sellers?: number;
   active_win_bets?: number;

@@ -18,21 +18,14 @@ export const useOddsHistory = (startupId: string, timeframe: '1h' | '1d' | '1w' 
       try {
         const { data, error } = await supabase
           .from('market_data')
-          .select('closing_price as odds, volume as win_volume, created_at')
+          .select('closing_price, volume, created_at')
           .eq('startup_id', startupId)
           .gte('created_at', `now() - interval '${timeFrameMap[timeframe]}'`)
           .order('created_at', { ascending: true });
 
         if (error) throw error;
         
-        const formattedData: OddsHistoryEntry[] = data.map(entry => ({
-          odds: entry.odds,
-          win_volume: entry.win_volume || 0,
-          fall_volume: 0, // Default to 0 as we don't track this separately yet
-          created_at: entry.created_at
-        }));
-        
-        setHistory(formattedData);
+        setHistory(data || []);
       } catch (error) {
         console.error('Error fetching odds history:', error);
       } finally {
@@ -53,13 +46,7 @@ export const useOddsHistory = (startupId: string, timeframe: '1h' | '1d' | '1w' 
           filter: `startup_id=eq.${startupId}`
         },
         (payload) => {
-          const newEntry: OddsHistoryEntry = {
-            odds: payload.new.closing_price,
-            win_volume: payload.new.volume || 0,
-            fall_volume: 0,
-            created_at: payload.new.created_at
-          };
-          setHistory(prev => [...prev, newEntry]);
+          setHistory(prev => [...prev, payload.new as OddsHistoryEntry]);
         }
       )
       .subscribe();

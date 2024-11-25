@@ -26,7 +26,7 @@ const Stats = () => {
             .eq('status', 'active'),
           supabase
             .from('closed_bets')
-            .select('final_profit_loss')
+            .select('sell_price, amount')
             .eq('user_id', session.user.id)
         ]);
 
@@ -35,12 +35,15 @@ const Stats = () => {
 
         // Calculate current P/L for active bets
         const currentPL = activeBets.data.reduce((acc, bet) => {
-          const profitLoss = (bet.startup.odds - bet.odds_at_time) * bet.amount;
+          const profitLoss = ((bet.startup?.odds || 0) - (bet.odds_at_time || 0)) * bet.amount;
           return acc + profitLoss;
         }, 0);
 
         // Calculate total P/L including closed bets
-        const closedPL = closedBets.data.reduce((acc, bet) => acc + (bet.final_profit_loss || 0), 0);
+        const closedPL = closedBets.data.reduce((acc, bet) => {
+          return acc + ((bet.sell_price || 0) - bet.amount);
+        }, 0);
+        
         const totalPL = currentPL + closedPL;
 
         setStats({

@@ -29,8 +29,8 @@ export const useStartupDetails = (startupId: string | undefined) => {
 
     const betsWithProfitLoss = data.map(bet => ({
       ...bet,
-      odds_at_time: bet.startup.odds,
-      current_profit_loss: (bet.startup.odds - bet.odds_at_time) * bet.amount
+      odds_at_time: bet.startup?.odds || 0,
+      current_profit_loss: ((bet.startup?.odds || 0) - (bet.odds_at_time || 0)) * bet.amount
     }));
 
     setUserBets(betsWithProfitLoss);
@@ -52,7 +52,10 @@ export const useStartupDetails = (startupId: string | undefined) => {
           .single();
 
         if (error) throw error;
-        setStartup(data);
+        setStartup({
+          ...data,
+          trending: data.growth_percentage ? data.growth_percentage > 10 : false
+        });
       } catch (error) {
         toast.error("Error fetching startup details");
       } finally {
@@ -75,7 +78,11 @@ export const useStartupDetails = (startupId: string | undefined) => {
         },
         (payload) => {
           if (payload.new) {
-            setStartup(prev => ({ ...prev, ...payload.new }));
+            setStartup(prev => ({
+              ...prev,
+              ...payload.new,
+              trending: payload.new.growth_percentage ? payload.new.growth_percentage > 10 : false
+            }));
           }
         }
       )
