@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ExtendedBet } from "@/types/betting";
+import { ExtendedBet, ActiveBet, ClosedBet } from "@/types/betting";
 
 const BetHistory = () => {
   const [bets, setBets] = useState<ExtendedBet[]>([]);
@@ -70,27 +70,34 @@ const BetHistory = () => {
         if (activeBetsResponse.error) throw activeBetsResponse.error;
         if (closedBetsResponse.error) throw closedBetsResponse.error;
         
-        const allBets = [
-          ...activeBetsResponse.data.map(bet => ({
-            ...bet,
-            isClosed: false,
-            date: bet.created_at,
-            odds_at_time: bet.startup?.odds || 0,
-            current_profit_loss: ((bet.startup?.odds || 0) - (bet.startup?.odds || 0)) * bet.amount
-          })),
-          ...closedBetsResponse.data.map(bet => ({
-            ...bet,
-            isClosed: true,
-            date: bet.closed_at || bet.created_at,
-            final_profit_loss: bet.sell_price ? bet.sell_price - bet.amount : 0
-          }))
-        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        const activeBets: ActiveBet[] = activeBetsResponse.data.map(bet => ({
+          ...bet,
+          isClosed: false,
+          date: bet.created_at,
+          odds_at_time: bet.startup?.odds || 0,
+          current_profit_loss: ((bet.startup?.odds || 0) - (bet.startup?.odds || 0)) * bet.amount
+        }));
+
+        const closedBets: ClosedBet[] = closedBetsResponse.data.map(bet => ({
+          ...bet,
+          isClosed: true,
+          date: bet.closed_at || bet.created_at,
+          final_profit_loss: bet.sell_price ? bet.sell_price - bet.amount : 0
+        }));
+
+        const allBets: ExtendedBet[] = [...activeBets, ...closedBets]
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
         setBets(allBets);
 
         const total = allBets.reduce((acc, bet) => {
-          return acc + (bet.isClosed ? (bet.final_profit_loss || 0) : (bet.current_profit_loss || 0));
+          if (bet.isClosed) {
+            return acc + bet.final_profit_loss;
+          } else {
+            return acc + bet.current_profit_loss;
+          }
         }, 0);
+
         setTotalProfitLoss(total);
       } catch (error) {
         console.error("Error fetching bets:", error);
@@ -141,7 +148,7 @@ const BetHistory = () => {
                       ? "text-green-500"
                       : "text-red-500"
                   }>
-                    {(bet.isClosed ? bet.final_profit_loss : bet.current_profit_loss)?.toFixed(2)}
+                    {(bet.isClosed ? bet.final_profit_loss : bet.current_profit_loss).toFixed(2)}
                   </span>
                 </TableCell>
                 <TableCell>

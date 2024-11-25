@@ -7,7 +7,6 @@ export interface Bet {
   startup_id: string;
   status: string;
   user_id: string;
-  odds_at_time: number;
   startup?: {
     name: string;
     odds: number;
@@ -39,11 +38,19 @@ export interface Startup {
   status?: string;
 }
 
-export interface ExtendedBet extends Bet {
-  isClosed: boolean;
+export interface ActiveBet extends Bet {
+  isClosed: false;
+  date: string;
+  odds_at_time: number;
+  current_profit_loss: number;
+}
+
+export interface ClosedBet extends Bet {
+  isClosed: true;
   date: string;
   sell_price?: number;
   closed_at?: string;
-  final_profit_loss?: number;
-  current_profit_loss?: number;
+  final_profit_loss: number;
 }
+
+export type ExtendedBet = ActiveBet | ClosedBet;
