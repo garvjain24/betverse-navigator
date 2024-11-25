@@ -7,9 +7,7 @@ export interface Bet {
   startup_id: string;
   status: string;
   user_id: string;
-  odds_at_time?: number;
-  final_profit_loss?: number;
-  current_profit_loss?: number;
+  odds_at_time: number;
   startup?: {
     name: string;
     odds: number;
@@ -46,4 +44,6 @@ export interface ExtendedBet extends Bet {
   date: string;
   sell_price?: number;
   closed_at?: string;
+  final_profit_loss?: number;
+  current_profit_loss?: number;
 }

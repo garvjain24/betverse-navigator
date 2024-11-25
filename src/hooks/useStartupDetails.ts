@@ -30,7 +30,7 @@ export const useStartupDetails = (startupId: string | undefined) => {
     const betsWithProfitLoss = data.map(bet => ({
       ...bet,
       odds_at_time: bet.startup?.odds || 0,
-      current_profit_loss: ((bet.startup?.odds || 0) - (bet.odds_at_time || 0)) * bet.amount
+      current_profit_loss: ((bet.startup?.odds || 0) - (bet.startup?.odds || 0)) * bet.amount
     }));
 
     setUserBets(betsWithProfitLoss);

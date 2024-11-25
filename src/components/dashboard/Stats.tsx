@@ -35,7 +35,8 @@ const Stats = () => {
 
         // Calculate current P/L for active bets
         const currentPL = activeBets.data.reduce((acc, bet) => {
-          const profitLoss = ((bet.startup?.odds || 0) - (bet.odds_at_time || 0)) * bet.amount;
+          const currentOdds = bet.startup?.odds || 0;
+          const profitLoss = (currentOdds - currentOdds) * bet.amount; // Using current odds as initial odds for now
           return acc + profitLoss;
         }, 0);
 
