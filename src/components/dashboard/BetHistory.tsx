@@ -11,8 +11,70 @@ const BetHistory = () => {
   const [loading, setLoading] = useState(true);
   const [totalProfitLoss, setTotalProfitLoss] = useState(0);
 
+  const calculateProfitLoss = (bet: ExtendedBet) => {
+    if ('current_profit_loss' in bet) {
+      return ((bet.startup?.odds || 0) - bet.odds_at_time) * bet.amount;
+    } else {
+      return bet.final_profit_loss;
+    }
+  };
+
+  const fetchAllBets = async (userId: string) => {
+    try {
+      const [activeBetsResponse, closedBetsResponse] = await Promise.all([
+        supabase
+          .from('bets')
+          .select(`
+            *,
+            startup:startups(name, odds)
+          `)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('closed_bets')
+          .select(`
+            *,
+            startup:startups(name, odds)
+          `)
+          .eq('user_id', userId)
+          .order('closed_at', { ascending: false })
+      ]);
+
+      if (activeBetsResponse.error) throw activeBetsResponse.error;
+      if (closedBetsResponse.error) throw closedBetsResponse.error;
+      
+      const activeBets: ActiveBet[] = activeBetsResponse.data.map(bet => ({
+        ...bet,
+        isClosed: false,
+        date: bet.created_at,
+        odds_at_time: bet.startup?.odds || 0,
+        current_profit_loss: ((bet.startup?.odds || 0) - (bet.startup?.odds || 0)) * bet.amount
+      }));
+
+      const closedBets: ClosedBet[] = closedBetsResponse.data.map(bet => ({
+        ...bet,
+        isClosed: true,
+        date: bet.closed_at || bet.created_at,
+        final_profit_loss: bet.sell_price ? bet.sell_price - bet.amount : 0
+      }));
+
+      const allBets: ExtendedBet[] = [...activeBets, ...closedBets]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      setBets(allBets);
+
+      const total = allBets.reduce((acc, bet) => acc + calculateProfitLoss(bet), 0);
+      setTotalProfitLoss(total);
+    } catch (error) {
+      console.error("Error fetching bets:", error);
+      toast.error("Error fetching bets");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchBets = async () => {
+    const setupSubscriptions = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
@@ -20,8 +82,10 @@ const BetHistory = () => {
           return;
         }
 
-        const betsSubscription = supabase
-          .channel('active_bets')
+        await fetchAllBets(session.user.id);
+
+        // Subscribe to changes in bets
+        const betsChannel = supabase.channel('bets_changes')
           .on(
             'postgres_changes',
             {
@@ -30,83 +94,33 @@ const BetHistory = () => {
               table: 'bets',
               filter: `user_id=eq.${session.user.id}`
             },
-            () => {
-              fetchAllBets(session.user.id);
-            }
+            () => fetchAllBets(session.user.id)
           )
           .subscribe();
 
-        await fetchAllBets(session.user.id);
+        // Subscribe to changes in startups
+        const startupsChannel = supabase.channel('startups_changes')
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'startups'
+            },
+            () => fetchAllBets(session.user.id)
+          )
+          .subscribe();
 
         return () => {
-          betsSubscription.unsubscribe();
+          betsChannel.unsubscribe();
+          startupsChannel.unsubscribe();
         };
       } catch (error) {
-        toast.error("Error fetching bet history");
+        toast.error("Error setting up real-time updates");
       }
     };
 
-    const fetchAllBets = async (userId: string) => {
-      try {
-        const [activeBetsResponse, closedBetsResponse] = await Promise.all([
-          supabase
-            .from('bets')
-            .select(`
-              *,
-              startup:startups(name, odds)
-            `)
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false }),
-          supabase
-            .from('closed_bets')
-            .select(`
-              *,
-              startup:startups(name, odds)
-            `)
-            .eq('user_id', userId)
-            .order('closed_at', { ascending: false })
-        ]);
-
-        if (activeBetsResponse.error) throw activeBetsResponse.error;
-        if (closedBetsResponse.error) throw closedBetsResponse.error;
-        
-        const activeBets: ActiveBet[] = activeBetsResponse.data.map(bet => ({
-          ...bet,
-          isClosed: false,
-          date: bet.created_at,
-          odds_at_time: bet.startup?.odds || 0,
-          current_profit_loss: ((bet.startup?.odds || 0) - (bet.startup?.odds || 0)) * bet.amount
-        }));
-
-        const closedBets: ClosedBet[] = closedBetsResponse.data.map(bet => ({
-          ...bet,
-          isClosed: true,
-          date: bet.closed_at || bet.created_at,
-          final_profit_loss: bet.sell_price ? bet.sell_price - bet.amount : 0
-        }));
-
-        const allBets: ExtendedBet[] = [...activeBets, ...closedBets]
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-        setBets(allBets);
-
-        const total = allBets.reduce((acc, bet) => {
-          if ('current_profit_loss' in bet) {
-            return acc + bet.current_profit_loss;
-          } else {
-            return acc + bet.final_profit_loss;
-          }
-        }, 0);
-
-        setTotalProfitLoss(total);
-      } catch (error) {
-        console.error("Error fetching bets:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBets();
+    setupSubscriptions();
   }, []);
 
   if (loading) return <div>Loading...</div>;
@@ -143,12 +157,8 @@ const BetHistory = () => {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <span className={
-                    ('current_profit_loss' in bet ? bet.current_profit_loss : bet.final_profit_loss) >= 0
-                      ? "text-green-500"
-                      : "text-red-500"
-                  }>
-                    {('current_profit_loss' in bet ? bet.current_profit_loss : bet.final_profit_loss).toFixed(2)}
+                  <span className={calculateProfitLoss(bet) >= 0 ? "text-green-500" : "text-red-500"}>
+                    {calculateProfitLoss(bet).toFixed(2)}
                   </span>
                 </TableCell>
                 <TableCell>
