@@ -89,7 +89,6 @@ const BetHistory = ({ limit = 20 }: { limit?: number }) => {
 
         await fetchAllBets(session.user.id);
 
-        // Subscribe to changes in bets
         const betsChannel = supabase.channel('bets_changes')
           .on(
             'postgres_changes',
@@ -103,7 +102,6 @@ const BetHistory = ({ limit = 20 }: { limit?: number }) => {
           )
           .subscribe();
 
-        // Subscribe to changes in startups
         const startupsChannel = supabase.channel('startups_changes')
           .on(
             'postgres_changes',
