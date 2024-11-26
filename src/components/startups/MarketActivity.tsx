@@ -35,10 +35,10 @@ const MarketActivity = ({ startupId }: MarketActivityProps) => {
         else if (winRatio < 0.3) sentiment = 'bearish';
 
         setMarketData({
-          currentOdds: data.odds,
+          currentOdds: Number(data.odds).toFixed(2),
           volume: totalBets,
           sentiment,
-          growthPercentage: data.growth_percentage || 0
+          growthPercentage: Number(data.growth_percentage || 0).toFixed(2)
         });
       } catch (error) {
         console.error('Error fetching market data:', error);
@@ -85,7 +85,7 @@ const MarketActivity = ({ startupId }: MarketActivityProps) => {
           <CardTitle className="text-sm font-medium">Current Odds</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{marketData.currentOdds.toFixed(2)}x</div>
+          <div className="text-2xl font-bold">{marketData.currentOdds}x</div>
         </CardContent>
       </Card>
 
@@ -95,10 +95,10 @@ const MarketActivity = ({ startupId }: MarketActivityProps) => {
         </CardHeader>
         <CardContent>
           <div className={`text-2xl font-bold flex items-center gap-2 ${
-            marketData.growthPercentage > 0 ? 'text-green-500' : 
-            marketData.growthPercentage < 0 ? 'text-red-500' : 'text-gray-500'
+            Number(marketData.growthPercentage) > 0 ? 'text-green-500' : 
+            Number(marketData.growthPercentage) < 0 ? 'text-red-500' : 'text-gray-500'
           }`}>
-            {marketData.growthPercentage > 0 ? '+' : ''}{marketData.growthPercentage.toFixed(2)}%
+            {Number(marketData.growthPercentage) > 0 ? '+' : ''}{marketData.growthPercentage}%
           </div>
         </CardContent>
       </Card>

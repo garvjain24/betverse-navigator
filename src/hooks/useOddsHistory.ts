@@ -25,7 +25,10 @@ export const useOddsHistory = (startupId: string, timeframe: '1h' | '1d' | '1w' 
 
         if (error) throw error;
         
-        setHistory(data || []);
+        setHistory(data?.map(entry => ({
+          ...entry,
+          closing_price: Number(entry.closing_price).toFixed(2)
+        })) || []);
       } catch (error) {
         console.error('Error fetching odds history:', error);
       } finally {
@@ -46,7 +49,10 @@ export const useOddsHistory = (startupId: string, timeframe: '1h' | '1d' | '1w' 
           filter: `startup_id=eq.${startupId}`
         },
         (payload) => {
-          setHistory(prev => [...prev, payload.new as OddsHistoryEntry]);
+          setHistory(prev => [...prev, {
+            ...payload.new as OddsHistoryEntry,
+            closing_price: Number(payload.new.closing_price).toFixed(2)
+          }]);
         }
       )
       .subscribe();

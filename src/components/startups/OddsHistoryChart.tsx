@@ -45,14 +45,17 @@ export const OddsHistoryChart = ({ startupId }: OddsHistoryChartProps) => {
                 dataKey="created_at" 
                 tickFormatter={formatDate}
               />
-              <YAxis domain={[1, 'auto']} />
+              <YAxis 
+                domain={[1, 'auto']} 
+                tickFormatter={(value) => `${Number(value).toFixed(2)}x`}
+              />
               <Tooltip
                 labelFormatter={formatDate}
-                formatter={(value: number) => [`${value}x`, 'Odds']}
+                formatter={(value: number) => [`${Number(value).toFixed(2)}x`, 'Odds']}
               />
               <Line 
                 type="monotone" 
-                dataKey="odds" 
+                dataKey="closing_price" 
                 stroke="#8B5CF6" 
                 strokeWidth={2}
                 dot={false}
