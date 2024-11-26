@@ -54,3 +54,16 @@ export interface ClosedBet extends Bet {
 }
 
 export type ExtendedBet = ActiveBet | ClosedBet;
+
+export interface BetFormData {
+  amount: number;
+  betType: 'win' | 'fall';
+}
+
+export interface OddsUpdate {
+  startup_id: string;
+  odds: number;
+  timestamp: string;
+  buy_volume?: number;
+  sell_volume?: number;
+}

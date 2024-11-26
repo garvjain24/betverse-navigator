@@ -260,6 +260,41 @@ export type Database = {
         }
         Relationships: []
       }
+      odds_history: {
+        Row: {
+          buy_volume: number | null
+          id: string
+          odds: number
+          sell_volume: number | null
+          startup_id: string | null
+          timestamp: string | null
+        }
+        Insert: {
+          buy_volume?: number | null
+          id?: string
+          odds: number
+          sell_volume?: number | null
+          startup_id?: string | null
+          timestamp?: string | null
+        }
+        Update: {
+          buy_volume?: number | null
+          id?: string
+          odds?: number
+          sell_volume?: number | null
+          startup_id?: string | null
+          timestamp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "odds_history_startup_id_fkey"
+            columns: ["startup_id"]
+            isOneToOne: false
+            referencedRelation: "startups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_book: {
         Row: {
           created_at: string
@@ -397,6 +432,7 @@ export type Database = {
           investors: number | null
           name: string
           odds: number
+          odds_at_placement: number | null
           sector: string | null
           stage: string | null
           status: string | null
@@ -414,6 +450,7 @@ export type Database = {
           investors?: number | null
           name: string
           odds: number
+          odds_at_placement?: number | null
           sector?: string | null
           stage?: string | null
           status?: string | null
@@ -431,6 +468,7 @@ export type Database = {
           investors?: number | null
           name?: string
           odds?: number
+          odds_at_placement?: number | null
           sector?: string | null
           stage?: string | null
           status?: string | null
