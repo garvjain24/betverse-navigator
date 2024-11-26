@@ -13,6 +13,7 @@ import StartupDetails from "./pages/StartupDetails";
 import NewStartup from "./pages/NewStartup";
 import Auth from "./pages/Auth";
 import Milestones from "./pages/Milestones";
+import BetHistoryPage from "./pages/BetHistoryPage";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,14 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/bet-history"
+                element={
+                  <ProtectedRoute>
+                    <BetHistoryPage />
                   </ProtectedRoute>
                 }
               />

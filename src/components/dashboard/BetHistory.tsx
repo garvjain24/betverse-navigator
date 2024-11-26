@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ExtendedBet, ActiveBet, ClosedBet } from "@/types/betting";
 
-const BetHistory = () => {
+const BetHistory = ({ limit = 20 }: { limit?: number }) => {
   const [bets, setBets] = useState<ExtendedBet[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalProfitLoss, setTotalProfitLoss] = useState(0);
@@ -29,7 +31,8 @@ const BetHistory = () => {
             startup:startups(name, odds)
           `)
           .eq('user_id', userId)
-          .order('created_at', { ascending: false }),
+          .order('created_at', { ascending: false })
+          .limit(limit),
         supabase
           .from('closed_bets')
           .select(`
@@ -38,6 +41,7 @@ const BetHistory = () => {
           `)
           .eq('user_id', userId)
           .order('closed_at', { ascending: false })
+          .limit(limit)
       ]);
 
       if (activeBetsResponse.error) throw activeBetsResponse.error;
@@ -59,7 +63,8 @@ const BetHistory = () => {
       }));
 
       const allBets: ExtendedBet[] = [...activeBets, ...closedBets]
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, limit);
 
       setBets(allBets);
 
@@ -129,10 +134,15 @@ const BetHistory = () => {
     <Card>
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
-          <span>Bet History</span>
-          <Badge className={totalProfitLoss >= 0 ? "bg-green-500" : "bg-red-500"}>
-            Total P/L: {totalProfitLoss.toFixed(2)} coins
-          </Badge>
+          <span>Recent Bet History</span>
+          <div className="flex items-center gap-4">
+            <Badge className={totalProfitLoss >= 0 ? "bg-green-500" : "bg-red-500"}>
+              Total P/L: {totalProfitLoss.toFixed(2)} coins
+            </Badge>
+            <Link to="/bet-history">
+              <Button variant="outline" size="sm">View All</Button>
+            </Link>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent>

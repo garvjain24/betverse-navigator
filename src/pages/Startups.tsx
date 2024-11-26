@@ -9,9 +9,10 @@ import StartupList from "@/components/startups/StartupList";
 const Startups = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sector, setSector] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   return (
-    <div className="container mx-auto p-6 space-y-6 animate-fade-in pt-20"> {/* Adjusted pt-20 */}
+    <div className="container mx-auto p-6 space-y-6 animate-fade-in pt-20">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <h1 className="text-3xl font-bold">Startups</h1>
         
@@ -38,7 +39,12 @@ const Startups = () => {
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search startups..." className="pl-8" />
+          <Input 
+            placeholder="Search startups..." 
+            className="pl-8" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
         
         <Select value={sector} onValueChange={setSector}>
@@ -46,6 +52,7 @@ const Startups = () => {
             <SelectValue placeholder="Select sector" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="">All Sectors</SelectItem>
             <SelectItem value="tech">Technology</SelectItem>
             <SelectItem value="health">Healthcare</SelectItem>
             <SelectItem value="finance">Finance</SelectItem>
@@ -59,7 +66,11 @@ const Startups = () => {
         </Button>
       </div>
 
-      {viewMode === "grid" ? <StartupCard /> : <StartupList />}
+      {viewMode === "grid" ? (
+        <StartupCard />
+      ) : (
+        <StartupList sector={sector} searchQuery={searchQuery} />
+      )}
     </div>
   );
 };

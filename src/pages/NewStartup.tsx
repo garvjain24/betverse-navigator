@@ -16,7 +16,6 @@ const NewStartup = () => {
     description: "",
     sector: "",
     stage: "",
-    odds: 1.0,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,7 +23,7 @@ const NewStartup = () => {
     try {
       const { error } = await supabase
         .from('startups')
-        .insert([formData]);
+        .insert([{ ...formData, odds: 1.0 }]); // Default odds to 1.0
       
       if (error) throw error;
       toast.success("Startup added successfully!");
@@ -96,19 +95,6 @@ const NewStartup = () => {
                   <SelectItem value="late">Late Stage</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="odds">Odds</Label>
-              <Input
-                id="odds"
-                type="number"
-                step="0.1"
-                min="1"
-                value={formData.odds}
-                onChange={(e) => setFormData(prev => ({ ...prev, odds: parseFloat(e.target.value) }))}
-                required
-              />
             </div>
 
             <Button type="submit" className="w-full">Add Startup</Button>

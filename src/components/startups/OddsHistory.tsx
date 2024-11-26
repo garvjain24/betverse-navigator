@@ -26,7 +26,7 @@ const OddsHistory = ({ startupId }: OddsHistoryProps) => {
 
         const formattedData = data.map(item => ({
           time: format(new Date(item.created_at), 'HH:mm'),
-          odds: item.closing_price || 0
+          odds: Number(item.closing_price) || 0
         }));
 
         setHistoryData(formattedData);
@@ -40,7 +40,6 @@ const OddsHistory = ({ startupId }: OddsHistoryProps) => {
 
     fetchOddsHistory();
 
-    // Subscribe to real-time updates
     const subscription = supabase
       .channel(`market_data_${startupId}`)
       .on(
@@ -54,7 +53,7 @@ const OddsHistory = ({ startupId }: OddsHistoryProps) => {
         (payload) => {
           setHistoryData(prev => [...prev, {
             time: format(new Date(payload.new.created_at), 'HH:mm'),
-            odds: payload.new.closing_price || 0
+            odds: Number(payload.new.closing_price) || 0
           }]);
         }
       )
@@ -105,10 +104,7 @@ const OddsHistory = ({ startupId }: OddsHistoryProps) => {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={historyData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="time"
-                tickFormatter={(value) => format(new Date(value), 'HH:mm')}
-              />
+              <XAxis dataKey="time" />
               <YAxis 
                 domain={['auto', 'auto']}
                 tickFormatter={(value) => `${value.toFixed(2)}x`}
