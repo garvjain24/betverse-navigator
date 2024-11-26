@@ -8,7 +8,7 @@ import StartupList from "@/components/startups/StartupList";
 
 const Startups = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [sector, setSector] = useState<string>("");
+  const [sector, setSector] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   return (
@@ -52,7 +52,7 @@ const Startups = () => {
             <SelectValue placeholder="Select sector" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Sectors</SelectItem>
+            <SelectItem value="all">All Sectors</SelectItem>
             <SelectItem value="tech">Technology</SelectItem>
             <SelectItem value="health">Healthcare</SelectItem>
             <SelectItem value="finance">Finance</SelectItem>
@@ -69,7 +69,7 @@ const Startups = () => {
       {viewMode === "grid" ? (
         <StartupCard />
       ) : (
-        <StartupList sector={sector} searchQuery={searchQuery} />
+        <StartupList sector={sector === "all" ? "" : sector} searchQuery={searchQuery} />
       )}
     </div>
   );
