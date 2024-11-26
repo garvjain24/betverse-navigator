@@ -27,7 +27,7 @@ export const useOddsHistory = (startupId: string, timeframe: '1h' | '1d' | '1w' 
         
         setHistory(data?.map(entry => ({
           ...entry,
-          closing_price: Number(entry.closing_price).toFixed(2)
+          closing_price: Number(entry.closing_price)
         })) || []);
       } catch (error) {
         console.error('Error fetching odds history:', error);
@@ -51,7 +51,7 @@ export const useOddsHistory = (startupId: string, timeframe: '1h' | '1d' | '1w' 
         (payload) => {
           setHistory(prev => [...prev, {
             ...payload.new as OddsHistoryEntry,
-            closing_price: Number(payload.new.closing_price).toFixed(2)
+            closing_price: Number(payload.new.closing_price)
           }]);
         }
       )
